@@ -3,7 +3,6 @@
 Work in progress on another attempt to clean up parking data. Currently validates ticket data and Chicago address data for simple parsing errors:
 ```
 ###Check first million tickets for errors. 
-###The data from FOIA is semicolon separated. This identifies many 
 
 /tickets.py -t1000000 | grep Code
 [('Violation Code', 'E'), ('Badge', 'EXPIRED PLATES OR TEMPORARY REGISTRATION'), ('Ticket Queue', '025')]
