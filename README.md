@@ -1,9 +1,9 @@
 # chicago_tickets
 
-Work in progress on another attempt to clean up parking data. Currently validates ticket data and Chicago address data for errors:
+Work in progress on another attempt to clean up parking data. Currently validates ticket data and Chicago address data for simple parsing errors:
 ```
 ###Check first million tickets for errors. 
-###Most of these are from stray semicolons from a semicolon delimited file from the FOIA request.
+###The data from FOIA is semicolon separated. This identifies many 
 
 /tickets.py -t1000000 | grep Code
 [('Violation Code', 'E'), ('Badge', 'EXPIRED PLATES OR TEMPORARY REGISTRATION'), ('Ticket Queue', '025')]
