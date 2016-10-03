@@ -4,6 +4,7 @@ import sys, os
 import cfg
 from tests import datafile_tests as filetests
 import addrparse
+import info_fixer
 
 #Module is to import and run basic validations on inputs. 
 
@@ -43,8 +44,14 @@ def raw_tickets(n=None, fix=cfg.fix_tktaddrs, test=True):
         if count > n:
             break
 
-        is_pass = filetests.test_tktline(line, fieldnames)
-        yield is_pass, line
+        warnings, fails = filetests.test_tktline(line, fieldnames)
 
+        if fails and fix:
+            fixed = info_fixer.fix_tktline(line, fails,fieldnames)
+
+            if fixed:
+                line = fixed
+                fails = None
 
         count+=1
+        yield line
