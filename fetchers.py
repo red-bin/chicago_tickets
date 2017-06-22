@@ -8,13 +8,12 @@ import info_fixer
 
 #Module is to import and run basic validations on inputs. 
 
-def chiaddrs(n=None, fixbad=cfg.fix_chiaddrs, test=True):
+def chiaddrs(test=True):
     unparsed = []
 
     fh = open(cfg.chiaddrs,'r')
     reader = csv.DictReader(fh)
 
-    count = 1
     for line in reader:
         testpass = filetests.test_chiaddrs(line)
 
@@ -26,32 +25,36 @@ def chiaddrs(n=None, fixbad=cfg.fix_chiaddrs, test=True):
 
         unparsed.append(line)
 
-        if count >= n:
-            break
-
-        count+=1
-
     return unparsed
 
-def raw_tickets(n=None, fix=cfg.fix_tktaddrs, test=True):
+def ticket_descriptions(db):
+    c = db.cursor()
+    c.execute("select * from violations")
+
+    ret = [ {'code':code, 'description':description, 'cost':cost} for id, code, description, cost in c.fetchall()]
+    return ret
+
+def raw_tickets(n=1000, test=True):
     fh = open(cfg.raw_tickets,'r')
 
     reader = csv.DictReader(fh,delimiter=';')
     fieldnames = reader.fieldnames
 
-    count = 1
+    count = 0
     for line in reader:
         if count > n:
             break
 
-        warnings, fails = filetests.test_tktline(line, fieldnames)
+        fails = filetests.test_tktline(line, fieldnames)
 
-        if fails and fix:
+        if fails:
             fixed = info_fixer.fix_tktline(line, fails,fieldnames)
 
             if fixed:
                 line = fixed
                 fails = None
+        if fails == None:
+            continue
 
-        count+=1
         yield line
+

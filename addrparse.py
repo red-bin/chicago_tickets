@@ -1,5 +1,3 @@
-#!/usr/bin/python2.7
-
 import sys, os, re
 from tests import addrtests
 import cfg
@@ -10,35 +8,47 @@ from usaddress import parse
 #def second_parse(usaddr_parsed, addr_str, chicago_addrs):
 
 def parse_address(addr_string):
+    if not re.match('^[0-9]+ ', addr_string):
+        addr_string = "000 %s" % addr_string
+
     ret_fails = []
     parsed_list = [ (k,v) for v,k in parse(addr_string) ]
 
     street_name = combine_streetnames(parsed_list)
 
     parsed = dict(parsed_list)
-    parsed['StreetName'] = street_name
+    parsed['StreetName'] = street_name #.replace("'", '')
     parsed = clean_parsed(parsed)
 
     test_failures = addrtests.test_parsed(parsed, addr_string)
-    fails = True if [ val for val in test_failures.values() if val ] else False
+    fails = [ val for val in test_failures if val ]
 
     if fails:
+        print("Fails! %s: %s" % (fails, parsed))
         parsed = correct_failures(parsed, test_failures)
         test_failures = addrtests.test_parsed(parsed, addr_string)
-        fails = True if [ val for val in test_failures.values() if val ] else False
+        if test_failures:
+            fails = True if [ val for val in test_failures.values() if val ] else False
 
-    if fails:
-        if len(test_failures['missing']) == 1 and test_failures['missing'][0] == 'StreetNamePostType':
-            pass
-        else:
-            ret_fails = test_failures
+            if len(test_failures['missing']) == 1 and test_failures['missing'][0] == 'StreetNamePostType':
+                pass
+            else:
+                ret_fails = test_failures
 
-    #TODO - split tests into something that understands addr grammar
+    parsed_keys = parsed.keys()
+    if 'StreetNamePostType' not in parsed_keys:
+        parsed['StreetNamePostType'] = ''
+    if 'StreetNamePostType' not in  parsed_keys:
+        parsed['StreetNamePostType'] = ''
+    if 'StreetNamePreDirectional' not in  parsed_keys:
+        parsed['StreetNamePreDirectional'] = ''
+    if 'AddressNumber' not in parsed_keys:
+        parsed['AddressNumber'] = -1
 
     return parsed, ret_fails
 
 def clean_parsed(parsed):
-    if 'PlaceName' in parsed.keys():
+    if 'PlaceName' in parsed:
         if parsed['PlaceName'] == "CHICAGO":
             parsed.pop('PlaceName')
 
@@ -48,14 +58,16 @@ def combine_streetnames(parsed_list):
     street_names = [ val for key,val in parsed_list if key == 'StreetName' ] 
     if len(street_names) > 1:
         street_names = ' '.join(street_names)
+    else: 
+        street_names = ''.join(street_names)
 
     return street_names
 
 
 def correct_failures(parsed, test_failures):
-    missing = test_failures['missing']
-    nodupes = test_failures['nodupes']
-    forbidden = test_failures['forbidden']
+    missing = [ i for i in test_failures if i[0] == 'missing' ]
+    nodupes = [ i for i in test_failures if i[0] == 'nodupes' ]
+    forbidden = [ i for i in test_failures if i[0] == 'forbidden' ]
 
     if forbidden:
         if 'PlaceName' in forbidden:
@@ -64,10 +76,10 @@ def correct_failures(parsed, test_failures):
                 missing = []
 
     if nodupes:
-        parsed = correct_nodupes(parsed, nodupes)
+        parsed = correct_nodupes(parsed, nodupes[0][1])
 
     if missing:
-        parsed = correct_missing(parsed, missing)
+        parsed = correct_missing(parsed, missing[0][1])
 
     return parsed
 
@@ -75,25 +87,10 @@ def correct_missing(parsed, failvals):
     parsed = dict(parsed)
     keys =  parsed.keys()
 
-    try:
-        street_name = parsed['StreetName']
-    except:
-        street_name = None
-
-    try:
-        street_type = parsed['StreetNamePostType']
-    except:
-        street_type = None
-
-    try:
-        street_num = parsed['AddressNumber']
-    except:
-        street_num = None
-
-    try:
-        street_dir = parsed['StreetNamePreDirectional']
-    except:
-        street_dir = None
+    street_name = parsed['StreetName'] if 'StreetName' in parsed else None
+    street_type = parsed['StreetNamePostType'] if 'StreetNamePostType' in parsed else None
+    street_num = parsed['AddressNumber'] if 'AddressNumber' in parsed else None
+    street_dir = parsed['StreetNamePreDirectional'] if 'StreetNamePreDirectional' in parsed else None
 
     if 'StreetName' in failvals:
         return parsed

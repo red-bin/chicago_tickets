@@ -2,9 +2,14 @@ from re import match
 from collections import defaultdict
 
 def test_tktline(line, fieldnames):
+    if len(line) != 13:
+        return None
+
     field_results  = defaultdict(dict)
-    linefields = line.keys()
-    testfields = linefields + ['missing', 'extra']
+    linefields = list(line.keys())
+    testfields = linefields
+    testfields.append('missing') 
+    testfields.append('extra')
 
     missing = [ f for f in fieldnames if f not in linefields]
     missing_test = True if len(missing) == 0 else False
@@ -50,7 +55,7 @@ def test_tktline(line, fieldnames):
     badge_test = True if line['Badge'].isdigit() else False
     field_results['Badge'] = badge_test
 
-    unit_test = True if line['Unit'].isdigit() else False
+    unit_test = True if line['Unit'].isdigit() or line['Unit'] == '' else False
     field_results['Unit'] = unit_test
 
     queue_test = True if line['Ticket Queue'].istitle() else False
@@ -62,16 +67,16 @@ def test_tktline(line, fieldnames):
 
     fails = ([ (key,line[key]) for key in fieldnames if not field_results[key] ])
 
-    if missing:
-        print missing
+    #if missing:
+    #    print "missing: %s" % missing
 
-    if extra:
-        print extra
+    #if extra:
+    #    print "extra fails: %s" % extra
 
-    if fails:
-        print fails
+    #if fails:
+    #    print "fails %s" % fails
 
-    return field_results
+    return fails
 
 def test_chiaddrs(line):
     if len(line) != 3:

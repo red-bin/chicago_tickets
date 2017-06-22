@@ -3,7 +3,7 @@
 from collections import defaultdict
 
 import addrparse
-import datafile_tests as filetests
+import tests.datafile_tests as filetests
 
 def test_parsed(parsed, dry_run=True):
     full_results = defaultdict(dict)

@@ -1,6 +1,19 @@
 #!/usr/bin/python2.7
 
-raw_tickets = 'data/A50462_TcktsIssdSince2009.txt'
-chiaddrs = 'data/chicago_addresses.csv'
-fix_chiaddrs = True
-fix_tktaddrs = True
+import psycopg2
+import fetchers
+
+def postgres_conn():
+    connstr = "dbname=tickets host=%s user=tickets password=tickets" % "localhost"
+    conn = psycopg2.connect(connstr)
+
+    return conn
+
+db = postgres_conn()
+ticket_descripts = fetchers.ticket_descriptions(db)
+
+datadir = '/dev/shm'
+raw_tickets = '%s/all_tickets.orig.txt' % datadir
+chiaddrs = '%s/chicago_addresses.csv' % datadir
+
+fix_addrs = True
