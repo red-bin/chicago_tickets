@@ -3,57 +3,6 @@
 import addrparse
 import csv
 
-user_stuff = """
-CREATE USER tickets PASSWORD 'tickets' ;
-alter table chicago_addresses owner to "tickets" ;                     
-alter table tickets owner to "tickets" ;
-alter table violations owner to "tickets" ;
-"""
-
-tickets_sql = """
-CREATE TABLE tickets (
-  id SERIAL PRIMARY KEY,
-  ticket_id BIGINT,
-  ticket_number BIGINT,
-  violation_code CHAR(15),
-  address_num INTEGER,
-  addr_id INTEGER REFERENCES chicago_addresses (id),
-  street_dir CHAR(10),
-  street_name TEXT,
-  street_type CHAR(20),
-  time TIMESTAMP,
-  weekday INTEGER,
-  ticket_queue CHAR(20),
-  unit CHAR(20),
-  badge CHAR(10),
-  license_type CHAR(20),
-  license_state CHAR(5),
-  license_number CHAR(15),
-  car_make CHAR(20),
-  hearing_dispo CHAR(20),
-  raw_location CHAR(50))
-"""
-chicago_addresses_sql= """
-CREATE TABLE chicago_addresses (
-    id SERIAL PRIMARY KEY,
-    address_number INTEGER,
-    street_dir CHAR(10),
-    street_name CHAR(50),
-    street_type CHAR(20),
-    latitude FLOAT,
-    longitude FLOAT)
-"""
-
-ticket_desc_sql = """
-    CREATE TABLE violations (
-      id SERIAL PRIMARY KEY,
-      code TEXT,
-      description TEXT,
-      cost FLOAT)
-"""
-      
-
-
 def insert_ticket_row(cursor, ticket_number=None, violation_code=None, address_num=None, 
         street_dir=None, street_name=None, street_type=None, time=None, weekday=None, 
         ticket_queue=None, unit=None, badge=None, license_type=None, license_state=None, 
