@@ -38,10 +38,10 @@ if __name__ == '__main__':
     chicago_addrs = []
 
     if d_args['--populate']:
-        pushers.populate_violations(db, '/opt/data/tickets/violation_descriptions.csv')
-        #unparsed_chiaddrs = fetchers.chiaddrs()
-        #pushers.populate_chicago_table(db, unparsed_chiaddrs)
-        #print "Done inserting."
+        #pushers.populate_violations(db, '/opt/data/tickets/violation_descriptions.csv')
+        unparsed_chiaddrs = fetchers.chiaddrs()
+        pushers.populate_chicago_table(db, unparsed_chiaddrs)
+        print("Done inserting.")
         exit(0)
 
     unparsed_tktlines = fetchers.raw_tickets(ticket_count)

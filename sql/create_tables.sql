@@ -27,9 +27,9 @@ CREATE TABLE tickets (
 CREATE TABLE chicago_addresses (
     id SERIAL PRIMARY KEY,
     address_number INTEGER,
-    street_dir CHAR(10),
-    street_name CHAR(50),
-    street_type CHAR(20),
+    street_dir TEXT,
+    street_name TEXT,
+    street_type TEXT,
     latitude FLOAT,
     longitude FLOAT) ;
 

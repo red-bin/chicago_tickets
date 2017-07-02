@@ -6,8 +6,6 @@ from tests import datafile_tests as filetests
 import addrparse
 import info_fixer
 
-#Module is to import and run basic validations on inputs. 
-
 def chiaddrs(test=True):
     unparsed = []
 

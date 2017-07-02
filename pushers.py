@@ -3,6 +3,8 @@
 import addrparse
 import csv
 
+from pprint import pprint
+
 def insert_ticket_row(cursor, ticket_number=None, violation_code=None, address_num=None, 
         street_dir=None, street_name=None, street_type=None, time=None, weekday=None, 
         ticket_queue=None, unit=None, badge=None, license_type=None, license_state=None, 
@@ -47,18 +49,18 @@ def populate_chicago_table(db, unparsed_chiaddrs):
 
         try:
             entry = [ int(parsed_address['AddressNumber']),
-                parsed_address['StreetNamePreDirectional'],
-                parsed_address['StreetName'],
-                parsed_address['StreetNamePostType'],
+                parsed_address['StreetNamePreDirectional'].rstrip(),
+                parsed_address['StreetName'].rstrip(),
+                parsed_address['StreetNamePostType'].rstrip(),
                 float(latitude),
                 float(longitude) ]
 
         except:
             try:
-                entry = [ parsed_address['AddressNumber'],
-                    parsed_address['StreetNamePreDirectional'],
-                    parsed_address['StreetName'],
-                    parsed_address['StreetNamePreType'],
+                entry = [ parsed_address['AddressNumber'].strip(),
+                    parsed_address['StreetNamePreDirectional'].strip(),
+                    parsed_address['StreetName'].rstrip(),
+                    parsed_address['StreetNamePreType'].rstrip(),
                     latitude,
                     longitude ]
             except:

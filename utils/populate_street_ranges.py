@@ -19,7 +19,8 @@ def insert_ranges(db_handle, filepath=street_range_filepath):
     reader = csv.reader(fh)
     header = reader.next()
 
-    lines = [ l for l in reader ]
+    lines = [ [a.strip() for a in l] for l in reader ]
+
     stmt = """INSERT INTO street_ranges 
              (full_name, direction, street, suffix, 
               suffix_dir, min_address, max_address) 

@@ -12,7 +12,7 @@ def postgres_conn():
 db = postgres_conn()
 ticket_descripts = fetchers.ticket_descriptions(db)
 
-datadir = '/dev/shm'
+datadir = '/opt/data/tickets'
 raw_tickets = '%s/all_tickets.orig.txt' % datadir
 chiaddrs = '%s/chicago_addresses.csv' % datadir
 
