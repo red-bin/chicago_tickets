@@ -21,6 +21,7 @@ import addrparse
 import fetchers
 import pushers
 import psycopg2
+import usaddress
 
 def postgres_conn():
     connstr = "dbname=tickets host=%s user=tickets password=tickets" % "localhost"
@@ -38,7 +39,6 @@ if __name__ == '__main__':
     chicago_addrs = []
 
     if d_args['--populate']:
-        #pushers.populate_violations(db, '/opt/data/tickets/violation_descriptions.csv')
         unparsed_chiaddrs = fetchers.chiaddrs()
         pushers.populate_chicago_table(db, unparsed_chiaddrs)
         print("Done inserting.")
@@ -50,8 +50,11 @@ if __name__ == '__main__':
     count = 0
     for line in unparsed_tktlines:
         addr_str = line['Violation Location']
+
         chi_addr_str = "%s CHICAGO, Illinois" % addr_str
-        chi_parsed, chi_fails = addrparse.parse_address(chi_addr_str)
+        chi_parsed, chi_fails, usaddress_keyvals = addrparse.parse_address(chi_addr_str)
+
+        pushers.insert_usaddress_keyvals(c, usaddress_keyvals)
 
         parsed = chi_parsed 
         fails = chi_fails

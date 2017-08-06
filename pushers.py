@@ -5,6 +5,17 @@ import csv
 
 from pprint import pprint
 
+def insert_usaddress_keyvals(cursor, keyvals):
+    stmt = "INSERT INTO usaddresses_parse (token_key, token_val, position) (%s, %s, %s)"
+
+    count = 1
+    values = []
+    for k, v in keyvals:
+        values.append((k, v, count))
+        count+=1
+
+    cursor.executemany(stmt, values)
+
 def insert_ticket_row(cursor, ticket_number=None, violation_code=None, address_num=None, 
         street_dir=None, street_name=None, street_type=None, time=None, weekday=None, 
         ticket_queue=None, unit=None, badge=None, license_type=None, license_state=None, 
@@ -89,7 +100,6 @@ def populate_violations(db, filename):
 
 def batch_inserts(db, stmt, values, n=10000):
     cursor = db.cursor()
-
     cursor.executemany(stmt, values)
 
     db.commit()

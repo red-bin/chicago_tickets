@@ -5,13 +5,16 @@ import cfg
 from pprint import pprint
 from usaddress import parse
 
-#def second_parse(usaddr_parsed, addr_str, chicago_addrs):
+
 
 def parse_address(addr_string):
     if not re.match('^[0-9]+ ', addr_string):
         addr_string = "000 %s" % addr_string
 
     ret_fails = []
+
+    count = 0
+
     parsed_list = [ (k,v) for v,k in parse(addr_string) ]
 
     street_name = combine_streetnames(parsed_list)
@@ -45,7 +48,7 @@ def parse_address(addr_string):
     if 'AddressNumber' not in parsed_keys:
         parsed['AddressNumber'] = -1
 
-    return parsed, ret_fails
+    return parsed, ret_fails, parsed_list
 
 def clean_parsed(parsed):
     if 'PlaceName' in parsed:

@@ -22,6 +22,7 @@ CREATE TABLE tickets (
   license_number CHAR(15),
   car_make CHAR(20),
   hearing_dispo CHAR(20),
+  parse_id INTEGER REFERENCES usaddresses_parse(id),
   raw_location CHAR(50)) ;
 
 CREATE TABLE chicago_addresses (
@@ -56,9 +57,15 @@ create table street_ranges (
     min_address INTEGER,
     max_address INTEGER);
     
+create table usaddresses_parse (
+    id SERIAL PRIMARY KEY,
+    token_key TEXT,
+    token_val TEXT,
+    position INTEGER)
 
 alter table chicago_addresses owner to "tickets" ;                     
 alter table tickets owner to "tickets" ;
 alter table violations owner to "tickets" ;
 alter table corrections owner to "tickets" ;
 alter table street_ranges owner to "tickets" ;
+alter table usaddresses_parse owner to "tickets" ;
