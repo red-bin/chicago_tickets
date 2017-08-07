@@ -1,15 +1,14 @@
-#!/usr/bin/python2.7
+#!/usr/bin/python3
 import csv
 import sys, os
-import cfg
 from tests import datafile_tests as filetests
 import addrparse
 import info_fixer
 
-def chiaddrs(test=True):
+def chiaddrs(filepath, test=True):
     unparsed = []
 
-    fh = open(cfg.chiaddrs,'r')
+    fh = open(filepath, 'r')
     reader = csv.DictReader(fh)
 
     for line in reader:
@@ -32,17 +31,15 @@ def ticket_descriptions(db):
     ret = [ {'code':code, 'description':description, 'cost':cost} for id, code, description, cost in c.fetchall()]
     return ret
 
-def raw_tickets(n=1000, test=True):
-    fh = open(cfg.raw_tickets,'r')
+def raw_tickets(filepath):
+    print(filepath)
+    fh = open(filepath, 'r')
 
     reader = csv.DictReader(fh,delimiter=';')
     fieldnames = reader.fieldnames
 
     count = 0
     for line in reader:
-        if count > n:
-            break
-
         fails = filetests.test_tktline(line, fieldnames)
 
         if fails:
@@ -55,4 +52,3 @@ def raw_tickets(n=1000, test=True):
             continue
 
         yield line
-

@@ -38,7 +38,7 @@ def fix_tktline(line, fails, fieldnames):
         return None
 
     address_idx = fieldnames.index('Violation Location')
-    for changedkey,vals in changed_fields.items():
+    for changedkey,vals in changed_fields.iteritems():
         if vals['old'] in [ td['code'] for td in cfg.ticket_descripts ]:
             code_idx = vals['index']
             missing_distance = (code_idx - 1) - (address_idx +1)

@@ -5,8 +5,6 @@ import cfg
 from pprint import pprint
 from usaddress import parse
 
-
-
 def parse_address(addr_string):
     if not re.match('^[0-9]+ ', addr_string):
         addr_string = "000 %s" % addr_string
@@ -15,7 +13,7 @@ def parse_address(addr_string):
 
     count = 0
 
-    parsed_list = [ (k,v) for v,k in parse(addr_string) ]
+    parsed_list = ( (k,v) for v,k in parse(addr_string) )
 
     street_name = combine_streetnames(parsed_list)
 
@@ -145,7 +143,7 @@ def correct_nodupes(parsed, dupefails):
     good_dupes = ['StreetName']
     new_parsed = parsed
 
-    for key, vals in dupefails.items():
+    for key, vals in dupefails.iteritems():
         if key in good_dupes and type(vals) == list:
             new_val = ' '.join(vals)
             new_parsed[key] = new_val
@@ -163,4 +161,4 @@ def parse_ticket(ticket):
     return True
 
 def parse_tickets(unparsed):
-    return [ parse_ticket(ticket) for ticket in unparsed ]
+    return ( parse_ticket(ticket) for ticket in unparsed )

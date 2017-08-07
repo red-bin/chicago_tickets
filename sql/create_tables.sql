@@ -1,5 +1,23 @@
-CREATE database tickets ;
-CREATE USER tickets PASSWORD 'tickets' ;
+create table usaddresses_parse (
+    id SERIAL PRIMARY KEY,
+    token_key TEXT,
+    token_val TEXT,
+    position INTEGER) ;
+
+CREATE TABLE violations (
+    id SERIAL PRIMARY KEY,
+    code TEXT,
+    description TEXT,
+    cost FLOAT) ;
+
+CREATE TABLE chicago_addresses (
+    id SERIAL PRIMARY KEY,
+    address_number INTEGER,
+    street_dir TEXT,
+    street_name TEXT,
+    street_type TEXT,
+    latitude FLOAT,
+    longitude FLOAT) ;
 
 CREATE TABLE tickets (
   id SERIAL PRIMARY KEY,
@@ -25,21 +43,6 @@ CREATE TABLE tickets (
   parse_id INTEGER REFERENCES usaddresses_parse(id),
   raw_location CHAR(50)) ;
 
-CREATE TABLE chicago_addresses (
-    id SERIAL PRIMARY KEY,
-    address_number INTEGER,
-    street_dir TEXT,
-    street_name TEXT,
-    street_type TEXT,
-    latitude FLOAT,
-    longitude FLOAT) ;
-
-CREATE TABLE violations (
-    id SERIAL PRIMARY KEY,
-    code TEXT,
-    description TEXT,
-    cost FLOAT) ;
-
 CREATE TABLE corrections (
     id SERIAL PRIMARY KEY, 
     field_type TEXT, 
@@ -57,12 +60,6 @@ create table street_ranges (
     min_address INTEGER,
     max_address INTEGER);
     
-create table usaddresses_parse (
-    id SERIAL PRIMARY KEY,
-    token_key TEXT,
-    token_val TEXT,
-    position INTEGER)
-
 alter table chicago_addresses owner to "tickets" ;                     
 alter table tickets owner to "tickets" ;
 alter table violations owner to "tickets" ;

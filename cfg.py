@@ -13,7 +13,7 @@ db = postgres_conn()
 ticket_descripts = fetchers.ticket_descriptions(db)
 
 datadir = '/opt/data/tickets'
-raw_tickets = '%s/all_tickets.orig.txt' % datadir
+raw_tickets = '%s/parking/all_tickets.orig.txt' % datadir
 chiaddrs = '%s/chicago_addresses.csv' % datadir
 
 fix_addrs = True

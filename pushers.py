@@ -6,7 +6,7 @@ import csv
 from pprint import pprint
 
 def insert_usaddress_keyvals(cursor, keyvals):
-    stmt = "INSERT INTO usaddresses_parse (token_key, token_val, position) (%s, %s, %s)"
+    stmt = "INSERT INTO usaddresses_parse (token_key, token_val, position) VALUES (%s, %s, %s)"
 
     count = 1
     values = []
@@ -43,7 +43,6 @@ def insert_ticket_row(cursor, ticket_number=None, violation_code=None, address_n
                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 
                        %s, %s, %s, %s, %s, %s, %s, %s)""" 
 
-
     cursor.execute(stmt, (ticket_number, violation_code, address_num, 
                addr_id, street_dir, street_name, street_type, time, weekday, 
                ticket_queue, unit, badge, license_type, license_state, 
@@ -54,28 +53,29 @@ def insert_ticket_row(cursor, ticket_number=None, violation_code=None, address_n
 def populate_chicago_table(db, unparsed_chiaddrs):
     chicago_addrs = []
     for unparsed in unparsed_chiaddrs:
-        parsed_address,fails = addrparse.parse_address(unparsed['Address'])
+        parsed_address, failures, parsed_list = addrparse.parse_address(unparsed['Address'])
+
         latitude = unparsed['LATITUDE']
         longitude = unparsed['LONGITUDE']
 
         try:
-            entry = [ int(parsed_address['AddressNumber']),
-                parsed_address['StreetNamePreDirectional'].rstrip(),
-                parsed_address['StreetName'].rstrip(),
-                parsed_address['StreetNamePostType'].rstrip(),
-                float(latitude),
-                float(longitude) ]
-
+            latitude = float(latitude)
         except:
-            try:
-                entry = [ parsed_address['AddressNumber'].strip(),
-                    parsed_address['StreetNamePreDirectional'].strip(),
-                    parsed_address['StreetName'].rstrip(),
-                    parsed_address['StreetNamePreType'].rstrip(),
-                    latitude,
-                    longitude ]
-            except:
-                entry = None
+            print(latitude)
+            latitude=0.0
+
+        try:
+            longitude = float(longitude)
+        except:
+            print(longitude)
+            longitude=0.0
+
+        entry = [ parsed_address['AddressNumber'],
+            parsed_address['StreetNamePreDirectional'].rstrip(),
+            parsed_address['StreetName'].rstrip(),
+            parsed_address['StreetNamePostType'].rstrip(),
+            latitude,
+            longitude ]
 
         if entry:
             chicago_addrs.append(entry)
@@ -95,7 +95,7 @@ def populate_violations(db, filename):
     c = db.cursor()
 
     stmt = "INSERT INTO violations (code, description, cost) VALUES (%s, %s, %s)"
-    c.executemany(stmt, [l for l in r])
+    c.executemany(stmt, (l for l in r))
     db.commit()
 
 def batch_inserts(db, stmt, values, n=10000):

@@ -4,14 +4,12 @@
 Tickets
 
 Usage:
-  tickets.py [--chiaddrs=<n> | --tickets=<n>]
+  tickets.py [--ticketfile=<n>]
   tickets.py --populate
 
 Options:
-    -t --tickets=<n>   Tickets count [default: 1].
-    -r --random        Select at random
-    -T --tests         Run tests
-    -p --populate      Populate Chicago Addresses Table
+    -t --ticketfile=<n>   File for tickets [default: /opt/data/tickets/parking].
+    -p --populate         Populate Chicago Addresses Table
 """
 
 from datetime import datetime
@@ -33,19 +31,10 @@ db = postgres_conn()
 c = db.cursor()
 
 if __name__ == '__main__':
-    d_args = docopt(__doc__)
-    ticket_count = int(d_args['--tickets'])
+    args = docopt(__doc__)
 
     chicago_addrs = []
-
-    if d_args['--populate']:
-        unparsed_chiaddrs = fetchers.chiaddrs()
-        pushers.populate_chicago_table(db, unparsed_chiaddrs)
-        print("Done inserting.")
-        exit(0)
-
-    unparsed_tktlines = fetchers.raw_tickets(ticket_count)
-    sql_strs = []
+    unparsed_tktlines = fetchers.raw_tickets(args['--ticketfile'])
 
     count = 0
     for line in unparsed_tktlines:

@@ -22,8 +22,11 @@ def test_tktline(line, fieldnames):
     tktno_test = line['Ticket Number'].isdigit()
     field_results['Ticket Number'] = tktno_test
 
-    plate_test = line['License Plate Number'].isalnum()
-    field_results['License Plate Number'] = plate_test
+    try:
+        plate_test = line['License Plate Number'].isalnum()
+        field_results['License Plate Number'] = plate_test
+    except:
+        field_results['License Plate Number'] = ''
 
     platestate = line['License Plate State']
     platestate_test = True if len(platestate) == 2 else False
