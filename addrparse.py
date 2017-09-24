@@ -1,52 +1,50 @@
 import sys, os, re
-from tests import addrtests
 import cfg
 
 from pprint import pprint
 from usaddress import parse
 
 def parse_address(addr_string):
-    if not re.match('^[0-9]+ ', addr_string):
-        addr_string = "000 %s" % addr_string
+    pre_parsed = {}
+    parsed_list = parse(addr_string)
 
-    ret_fails = []
+    for v, k in parsed_list:
+        if k not in pre_parsed:
+            pre_parsed[k] = []
 
-    count = 0
+        pre_parsed[k].append(v)
 
-    parsed_list = ( (k,v) for v,k in parse(addr_string) )
+    parsed = {}
+    for k,v in pre_parsed.items():
+        parsed[k] = ' '.join(pre_parsed[k])
 
-    street_name = combine_streetnames(parsed_list)
+    try:
+        addr_num = parsed['AddressNumber']
+    except:
+        addr_num = 0 
+    try:
+        post_type = parsed['StreetNamePostType']
+    except:
+        post_type = 0 
+    try:
+        post_dir = parsed['StreetNamePreDirectional']
+    except:
+        post_dir = None
+    try:
+        street_name = parsed['StreetName']
+    except:
 
-    parsed = dict(parsed_list)
-    parsed['StreetName'] = street_name #.replace("'", '')
-    parsed = clean_parsed(parsed)
-
-    test_failures = addrtests.test_parsed(parsed, addr_string)
-    fails = [ val for val in test_failures if val ]
-
-    if fails:
-        print("Fails! %s: %s" % (fails, parsed))
-        parsed = correct_failures(parsed, test_failures)
-        test_failures = addrtests.test_parsed(parsed, addr_string)
-        if test_failures:
-            fails = True if [ val for val in test_failures.values() if val ] else False
-
-            if len(test_failures['missing']) == 1 and test_failures['missing'][0] == 'StreetNamePostType':
-                pass
-            else:
-                ret_fails = test_failures
-
-    parsed_keys = parsed.keys()
-    if 'StreetNamePostType' not in parsed_keys:
+    keys = parsed.keys()
+    if 'StreetNamePostType' not in keys:
         parsed['StreetNamePostType'] = ''
-    if 'StreetNamePostType' not in  parsed_keys:
+    if 'StreetNamePostType' not in  keys:
         parsed['StreetNamePostType'] = ''
-    if 'StreetNamePreDirectional' not in  parsed_keys:
+    if 'StreetNamePreDirectional' not in  keys:
         parsed['StreetNamePreDirectional'] = ''
-    if 'AddressNumber' not in parsed_keys:
+    if 'AddressNumber' not in keys:
         parsed['AddressNumber'] = -1
 
-    return parsed, ret_fails, parsed_list
+    return parsed, parsed_list
 
 def clean_parsed(parsed):
     if 'PlaceName' in parsed:

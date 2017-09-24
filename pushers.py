@@ -17,7 +17,7 @@ def insert_usaddress_keyvals(cursor, keyvals):
     cursor.executemany(stmt, values)
 
 def insert_ticket_row(cursor, ticket_number=None, violation_code=None, address_num=None, 
-        street_dir=None, street_name=None, street_type=None, time=None, weekday=None, 
+        street_dir=None, street_name=None, street_type=None, time=None, 
         ticket_queue=None, unit=None, badge=None, license_type=None, license_state=None, 
         license_number=None, car_make=None, hearing_dispo=None, raw_location=None, addr_id=None):
 
@@ -30,7 +30,6 @@ def insert_ticket_row(cursor, ticket_number=None, violation_code=None, address_n
                  street_name, 
                  street_type, 
                  time,
-                 weekday,
                  ticket_queue,
                  unit,
                  badge,
@@ -40,11 +39,11 @@ def insert_ticket_row(cursor, ticket_number=None, violation_code=None, address_n
                  car_make,
                  hearing_dispo,
                  raw_location) 
-               VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 
+               VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s,
                        %s, %s, %s, %s, %s, %s, %s, %s)""" 
 
     cursor.execute(stmt, (ticket_number, violation_code, address_num, 
-               addr_id, street_dir, street_name, street_type, time, weekday, 
+               addr_id, street_dir, street_name, street_type, time,
                ticket_queue, unit, badge, license_type, license_state, 
                license_number, car_make, hearing_dispo, raw_location))
 

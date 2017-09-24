@@ -28,56 +28,79 @@ def test_tktline(line, fieldnames):
     except:
         field_results['License Plate Number'] = ''
 
-    platestate = line['License Plate State']
-    platestate_test = True if len(platestate) == 2 else False
-    field_results['License Plate State'] = platestate_test
+    try:
+        platestate_test = True if len(platestate) == 2 else False
+        field_results['License Plate State'] = platestate_test
+    except:
+        field_results['License Plate State'] = ''
 
-    platetype_test = line['License Plate Type'].isalnum()
-    field_results['License Plate Type'] = platetype_test
+    try:
+        platetype_test = line['License Plate Type'].isalnum()
+        field_results['License Plate Type'] = platetype_test
+    except:
+        field_results['License Plate Type'] = ''
 
-    make_test = line['Ticket Make'].isalpha()
-    field_results['Ticket Make'] = make_test
+    try:
+        make_test = line['Ticket Make'].isalpha()
+        field_results['Ticket Make'] = make_test
+    except:
+        field_results['Ticket Make'] = ''
 
     #regex = "[01][0-9]/[0-3][0-9]/20[01][0-9] [01][0-9]:[0-5][0-9] [ap]m"
-    date_test = True if len(line['Issue Date']) == 19 else False
-    field_results['Issue Date'] = date_test 
+    try:
+        date_test = True if len(line['Issue Date']) == 19 else False
+        field_results['Issue Date'] = date_test 
+    except:
+        field_results['Issue Date'] = ''
 
     #more thorough testing comes later for perf reasons
-    loc_test = True if len(line['Violation Location']) > 1 else False
-    field_results['Violation Location'] = loc_test
+    try:
+        loc_test = True if len(line['Violation Location']) > 1 else False
+        field_results['Violation Location'] = loc_test
+    except:
+        field_results['Violation Location'] = ''
 
-    code = line['Violation Code']
-    code_test = True if code[:-2].isdigit() and len(code) in [7,8,9] else False
-    field_results['Violation Code'] = code_test
+    try:
+        code = line['Violation Code']
+        code_test = True if code[:-2].isdigit() and len(code) in [7,8,9] else False
+        field_results['Violation Code'] = code_test
+    except:
+        field_results['Violation Code'] = ''
 
     #12 comes from the minimum tkt descr length
-    descr = line['Violation Description']
-    descr_test = True if len(descr) >= 12 else False
-    field_results['Violation Description'] = True
+    try:
+        descr = line['Violation Description']
+        descr_test = True if len(descr) >= 12 else False
+        field_results['Violation Description'] = True
+    except:
+        field_results['Violation Description'] = ''
 
-    badge_test = True if line['Badge'].isdigit() else False
-    field_results['Badge'] = badge_test
+    try:
+        badge_test = True if line['Badge'].isdigit() else False
+        field_results['Badge'] = badge_test
+    except:
+        field_results['Badge'] = ''
 
-    unit_test = True if line['Unit'].isdigit() or line['Unit'] == '' else False
-    field_results['Unit'] = unit_test
+    try:
+        unit_test = True if line['Unit'].isdigit() or line['Unit'] == '' else False
+        field_results['Unit'] = unit_test
+    except:
+        field_results['Unit'] = ''
 
-    queue_test = True if line['Ticket Queue'].istitle() else False
-    field_results['Ticket Queue'] = queue_test
+    try:
+        queue_test = True if line['Ticket Queue'].istitle() else False
+        field_results['Ticket Queue'] = queue_test
+    except:
+        field_results['Ticket Queue'] = ''
 
-    hearing = line['Hearing Dispo']
-    hearing_test = True if hearing.istitle or hearing == '' else False
-    field_results['Hearing Dispo'] = hearing_test
+    try:
+        hearing = line['Hearing Dispo']
+        hearing_test = True if hearing.istitle or hearing == '' else False
+        field_results['Hearing Dispo'] = hearing_test
+    except:
+        field_results['Hearing Dispo'] = ''
 
     fails = ([ (key,line[key]) for key in fieldnames if not field_results[key] ])
-
-    #if missing:
-    #    print "missing: %s" % missing
-
-    #if extra:
-    #    print "extra fails: %s" % extra
-
-    #if fails:
-    #    print "fails %s" % fails
 
     return fails
 

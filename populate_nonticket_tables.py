@@ -7,13 +7,13 @@ Usage:
   tickets.py [--filepath=<n>]
 
 Options:
-    -t --filepath=<n>   File for tickets [default: /opt/data/tickets/parking].
+    --filepath=<n>   File for tickets [default: /opt/data/tickets/parking].
 """
 
 from docopt import docopt
 
-import fetchers
 import pushers
+import fetchers
 import psycopg2
 
 def postgres_conn():
@@ -31,5 +31,6 @@ if __name__ == '__main__':
     chicago_addrs = []
 
     unparsed_chiaddrs = fetchers.chiaddrs(args['--filepath'])
+
     pushers.populate_chicago_table(db, unparsed_chiaddrs)
     print("Done inserting.")

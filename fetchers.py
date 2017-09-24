@@ -40,15 +40,15 @@ def raw_tickets(filepath):
 
     count = 0
     for line in reader:
-        fails = filetests.test_tktline(line, fieldnames)
+        #fails = filetests.test_tktline(line, fieldnames)
 
-        if fails:
-            fixed = info_fixer.fix_tktline(line, fails,fieldnames)
+        #if fails:
+        #    fixed = info_fixer.fix_tktline(line, fails,fieldnames)
 
-            if fixed:
-                line = fixed
-                fails = None
-        if fails == None:
-            continue
+        #    if fixed:
+        #        line = fixed
+        #        fails = None
+        #if fails == None:
+        #    continue
 
         yield line
