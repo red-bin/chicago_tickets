@@ -23,28 +23,11 @@ function warning { echo -e "[WARNING] $*" ; }
 
 function cpu_count() { awk '$1 == "processor" {i=$NF} END {print i+1}' /proc/cpuinfo ; }
 
-function split_by_cpus() {
-    info "Splitting $1 for multithreading"
-    line_count=`wc -l $1 | awk '{print $1}'`
-    lines_per=$((($line_count / `cpu_count`)+1))
-
-    
-    pushd $DATADIR/temp_data
-    sed 1d $1 | split -l $lines_per --additional-suffix='.split'
-    find . -type f -name \*split \
-      | xargs -P`cpu_count` -I{} sed -i "1s/^/$TICKETSHEADER\n/" {}
-    popd
-    
-    mv $DATADIR/temp_data/*.split /dev/shm/temp_data
-
-    info "Splitting $1 for multithreading done"
-}
-
-function sql_from_file { sudo su postgres -c "psql -d tickets < $SQLDIR/$1" ; }
+function sql_from_file { sudo su postgres -c "psql -p5433 -d tickets < $SQLDIR/$1" ; }
 
 function db_setup() {
     info "Initting db"
-    sudo su postgres -c "psql < $SQLDIR/init_db.sql" 
+    sudo su postgres -c "psql -p 5433 < $SQLDIR/init_db.sql" 
     sql_from_file create_tables.sql
     sql_from_file create_temp_raw_tickets.sql
 
@@ -71,19 +54,8 @@ function download_data() {
       >> "$DATADIR/Chicago_Street_Names.csv" > /dev/null
 }
 
-function data_setup() {
-    #split_by_cpus $RAWTICKETFILE
-    $BASEDIR/populate_nonticket_tables.py --filepath=/opt/data/tickets/chicago_addresses.csv
-    $BASEDIR/tickets.py --populate
-
-    $BASEDIR/utils/raw_tickets_to_csv.py --infile=$RAWTICKETFILE --outfile=$TICKETSCSV
-    
-    $BASEDIR/utils/populate_street_ranges.py
-    $BASEDIR/utils/insert_levens_corrections.py
-}
-
 function data_transforms() {
-    sql_from_file populate_parsing_tables.sql
+    #sql_from_file populate_parsing_tables.sql
     sql_from_file load_from_files.sql
 }
 
@@ -96,6 +68,3 @@ function setup() {
 
 db_setup
 data_transforms
-
-#find /dev/shm/temp_data/ -maxdepth 1 -name '*.split' -type f \
-#  | xargs -P`cpu_count` -I{} $BASEDIR/tickets.py --ticketfile={}

@@ -1,5 +1,6 @@
 BEGIN ;
 
+
 CREATE TEMPORARY TABLE raw_tickets (
   id SERIAL PRIMARY KEY,
   ticket_number BIGINT,
@@ -27,26 +28,18 @@ INSERT INTO violations (code, description, cost)
    FROM raw_tickets
    GROUP BY violation_code, violation_desc ;
 
-INSERT INTO ticket_addrs (addrstr_raw, street_num, street_dir)
-  SELECT violation_location,
-       CASE WHEN split_part(violation_location, ' ', 1) ~ '^[0-9]+$' 
-          THEN split_part(violation_location, ' ', 1)::integer 
-          ELSE -1
-       END,
-       CASE WHEN split_part(violation_location, ' ', 2) ~ '^[NESWnesw]$'
-          THEN split_part(violation_location, ' ', 2)
-          ELSE ''
-       END
-     FROM raw_tickets
-     GROUP BY violation_location ;
+COPY ticket_addrs (addrstr_raw, street_num, street_dir, 
+                  street_name, street_type, scrap_pile)
+  FROM '/home/matt/data/tickets/parsed_addresses.csv'
+      WITH (FORMAT CSV, DELIMITER ',', NULL '', HEADER) ;
 
-UPDATE ticket_addrs
-  SET addrstr_current = regexp_replace(addrstr_raw, '^[^ ]+ [^ ]+ ', '') 
-  WHERE street_dir in ('N','E','S','W') AND street_num IS NOT NULL ;
+COPY levens (change_from, change_to, nleven)
+  FROM '/home/matt/git/chicago_tickets/data/levens.csv'
+      WITH (FORMAT CSV, DELIMITER ',', NULL '', HEADER) ;
 
-UPDATE ticket_addrs
-  SET addrstr_current = regexp_replace(addrstr_raw, '^[^ ]+ ', '') 
-  WHERE street_dir not in ('N','E','S','W') and street_num it not NULL ;
+COPY street_ranges (full_name, direction, street, suffix, suffix_dir, min_address, max_address)
+  FROM '/home/matt/git/chicago_tickets/data/street_ranges.csv'
+      WITH (FORMAT CSV, DELIMITER ',', NULL '', HEADER) ;
 
 INSERT INTO tickets (ticket_number, violation_id,
                      addr_id, time, ticket_queue, unit, 

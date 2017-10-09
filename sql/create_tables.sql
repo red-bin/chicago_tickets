@@ -1,17 +1,17 @@
 BEGIN ;
 
-create table usaddresses_parse (
-    id SERIAL PRIMARY KEY,
-    token_key TEXT,
-    token_val TEXT,
-    position INTEGER) ;
-
 CREATE TABLE corrections (
     id SERIAL PRIMARY KEY, 
     field_type TEXT, 
     change_from TEXT, 
     change_to TEXT, 
-    mod_type TEXT) ;
+    mod_type TEXT ) ;
+
+CREATE TABLE levens (
+  id SERIAL PRIMARY KEY,
+  change_from TEXT,
+  change_to TEXT,
+  nleven FLOAT ) ;
 
 CREATE TABLE violations (
     id SERIAL PRIMARY KEY,
@@ -37,6 +37,7 @@ CREATE TABLE ticket_addrs (
     street_dir TEXT,
     street_name TEXT,
     street_type TEXT,
+    scrap_pile TEXT,
     latitude FLOAT,
     longitude FLOAT,
     correction_id INTEGER REFERENCES corrections ) ;
@@ -71,6 +72,7 @@ alter table tickets owner to "tickets" ;
 alter table violations owner to "tickets" ;
 alter table corrections owner to "tickets" ;
 alter table street_ranges owner to "tickets" ;
-alter table usaddresses_parse owner to "tickets" ;
+alter table ticket_addrs owner to "tickets" ;
+alter table levens owner to "tickets" ;
 
 COMMIT ;
