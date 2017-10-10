@@ -73,7 +73,7 @@ if __name__ == '__main__':
     good_streets = valid_streets(db)
     tkt_streets = ticket_streets(db)
 
-    fh = open('/home/matt/git/chicago_tickets/data/levens.csv','w')
+    fh = open('/home/matt/git/chicago_tickets/data/corrections/levens.csv','w')
     writer = csv.writer(fh)
 
     unknowns = [ t for t in tkt_streets if t not in good_streets ]

@@ -29,7 +29,6 @@ function db_setup() {
     info "Initting db"
     sudo su postgres -c "psql -p 5433 < $SQLDIR/init_db.sql" 
     sql_from_file create_tables.sql
-    sql_from_file create_temp_raw_tickets.sql
 
     info "db init done"
 }
@@ -55,8 +54,8 @@ function download_data() {
 }
 
 function data_transforms() {
-    #sql_from_file populate_parsing_tables.sql
     sql_from_file load_from_files.sql
+    sql_from_file corrections.sql
 }
 
 function setup() {

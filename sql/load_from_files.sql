@@ -34,7 +34,7 @@ COPY ticket_addrs (addrstr_raw, street_num, street_dir,
       WITH (FORMAT CSV, DELIMITER ',', NULL '', HEADER) ;
 
 COPY levens (change_from, change_to, nleven)
-  FROM '/home/matt/git/chicago_tickets/data/levens.csv'
+  FROM '/home/matt/git/chicago_tickets/data/corrections/street_name_levens.csv'
       WITH (FORMAT CSV, DELIMITER ',', NULL '', HEADER) ;
 
 COPY street_ranges (full_name, direction, street, suffix, suffix_dir, min_address, max_address)
