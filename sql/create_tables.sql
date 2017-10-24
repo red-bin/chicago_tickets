@@ -21,6 +21,7 @@ CREATE TABLE violations (
 
 CREATE TABLE chicago_addresses (
     id SERIAL PRIMARY KEY,
+    address TEXT,
     address_number INTEGER,
     street_dir TEXT,
     street_name TEXT,

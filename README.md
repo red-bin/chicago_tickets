@@ -1,20 +1,46 @@
 # chicago_tickets
+Project to parse and map 38 million parking tickets from 2003 and 2016. The information itself came from a Chicago Department of Revenue FOIA request.
 
-Work in progress on another attempt to clean up parking data. Currently validates ticket data and Chicago address data for simple parsing errors:
-```
-###Check first million tickets for errors. 
+### Design Goals
+Throwing out data is a last resort option.
+Repeatability, always.
+PostgREST + psql views = simple api interface.
+Filetype (eg, json/csv) serialization should be easy.
+SQL first, python second.
 
-/tickets.py -t1000000 | grep Code
-[('Violation Code', 'E'), ('Badge', 'EXPIRED PLATES OR TEMPORARY REGISTRATION'), ('Ticket Queue', '025')]
-[('Violation Code', 'M'), ('Badge', 'EXPIRED PLATES OR TEMPORARY REGISTRATION'), ('Ticket Queue', '018')]
-[('Violation Code', 'EXINGTON'), ('Badge', 'NO CITY STICKER VEHICLE UNDER/EQUAL TO 16,000 LBS.'), ('Ticket Queue', '393')]
-[('Violation Code', ''), ('Badge', 'EXPIRED PLATES OR TEMPORARY REGISTRATION'), ('Ticket Queue', '004')]
-[('Violation Code', 'LARK'), ('Badge', 'OBSTRUCT ROADWAY'), ('Ticket Queue', '020')]
-[('Violation Code', ''), ('Badge', 'EXP. METER NON-CENTRAL BUSINESS DISTRICT'), ('Ticket Queue', '002')]
-[('Violation Code', 'PMG'), ('Badge', 'STREET CLEANING'), ('Ticket Queue', '498')]
-[('Violation Code', ''), ('Badge', 'DOUBLE PARKING OR STANDING'), ('Ticket Queue', '002')]
-[('Violation Code', ''), ('Badge', 'EXPIRED PLATES OR TEMPORARY REGISTRATION'), ('Ticket Queue', '009')]
-[('Violation Code', ''), ('Badge', 'STREET CLEANING'), ('Ticket Queue', '006')]
-[('Violation Code', ''), ('Badge', '0964080B'), ('Unit', 'NO STANDING/PARKING TIME RESTRICTED'), ('Ticket Queue', '11378')]
-[('License Plate Number', ''), ('Violation Code', 'D'), ('Badge', 'EXPIRED PLATES OR TEMPORARY REGISTRATION'), ('Ticket Queue', '018')]
-```
+### Cleanup Woes
+The FOIA data received through FOIA is bombastically messy.
+An address string is the only useful location info.
+Addresses are free-form, with many, many millions of typos.
+Data is semicolon separated, and typos contain semicolons.
+Good address correction is expensive.
+Free/cheap correction isn't very good.
+
+### Data normalization state
+Addresses are categorized using usaddresses and updated into the table, `ticket_addrs`.
+Lat/long is currently not associated with ticket addresses.
+Address suffixes are normalized with lookups from `corrections` table.
+A normalized levenstein distance of less than .2 is used for typos correction.
+Rogue quote chars break import of many ticket lines.
+
+### Data normalization Todo
+OSM+PostGIS for address lookups in place of data.cityofchicago.org data.
+Implement typo validation using time delta between tickets from ticketers.
+Add timeseries functionality, either through psql extension or influxdb.
+Train usaddresses against Chicago addresses only.
+Improve upon nlevenstein address correction.
+Add url of legal code into `violations` table.
+Add cost into `violations` table.
+Validate address correction.
+Add indexes to tables.
+
+### Pipe dream
+Audit whether a ticket should have been given or not.
+
+### Design Todo
+Makefile
+Improve documentation.
+Remove my local dependencies.
+Create a web page.
+Trello?
+Docker?
