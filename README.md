@@ -46,8 +46,10 @@ Project to parse and map 38 million parking tickets from 2003 and 2016. The info
   * Docker?</br>
   
   ### Downloads
-  SQL Dump: http://data.mchap.io/tickets/chicago_tickets.latest.sql.gz
-  Original Files:  http://data.mchap.io/tickets/A50462_TcktsIssd_200303-200812.txt.gz 
-                   http://data.mchap.io/tickets/A50462_TcktsIssdSince2009.txt.gz
-                   http://data.mchap.io/tickets/A50462_TcktsIssd_201603-todate.txt.gz
+| Description                       | URL                                                                    | 
+|------------------------|---------------------------------------------------------------------| 
+| SQL Dump               | http://data.mchap.io/tickets/chicago_tickets.latest.sql.gz          | 
+| Orig. from 2003-2008 | http://data.mchap.io/tickets/A50462_TcktsIssd_200303-200812.txt.gz  | 
+| Orig. from 2009-2016 | http://data.mchap.io/tickets/A50462_TcktsIssdSince2009.txt.gz       | 
+| Orig. from 2016-2016 | http://data.mchap.io/tickets/A50462_TcktsIssd_201603-todate.txt.gz  | 
   
