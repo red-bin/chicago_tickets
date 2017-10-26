@@ -9,7 +9,7 @@ Project to parse and map 38 million parking tickets from 2003 and 2016. The info
   * SQL first, python second.<br>
 
 ### Cleanup Woes
-  * The FOIA data received through FOIA is bombastically messy.</br>
+  * The original data is bombastically messy.</br>
   * An address string is the only useful location info.</br>
   * Addresses are free-form, with many, many millions of typos.</br>
   * Data is semicolon separated, and typos contain semicolons.</br>
@@ -44,3 +44,10 @@ Project to parse and map 38 million parking tickets from 2003 and 2016. The info
   * Create a web page.</br>
   * Trello?</br>
   * Docker?</br>
+  
+  ### Downloads
+  SQL Dump: http://data.mchap.io/tickets/chicago_tickets.latest.sql.gz
+  Original Files:  http://data.mchap.io/tickets/A50462_TcktsIssd_200303-200812.txt.gz 
+                   http://data.mchap.io/tickets/A50462_TcktsIssdSince2009.txt.gz
+                   http://data.mchap.io/tickets/A50462_TcktsIssd_201603-todate.txt.gz
+  
