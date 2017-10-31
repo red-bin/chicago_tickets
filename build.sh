@@ -9,8 +9,9 @@ DATADIR="/opt/data/tickets"
 SQLDIR="$BASEDIR/sql"
 
 STREETNAMESURL="https://data.cityofchicago.org/api/views/i6bp-fvbx/rows.csv"
+OPENADDR_URL="https://s3.amazonaws.com/data.openaddresses.io/openaddr-collected-us_midwest.zip"
 
-function sql_from_file { sudo su postgres -c "psql -p5432 -d tickets < $SQLDIR/$1" ; }
+function sql_from_file { sudo su postgres -c "psql -p5432 -d tickets -U tickets < $SQLDIR/$1" ; }
 
 function download_data() {
     echo "street_name,dir,street,suffix,suffix_dir,start_address,end_address" >> "$DATADIR/Chicago_Street_Names.csv"
@@ -24,8 +25,11 @@ function download_data() {
 #egrep "(^([^;]*;){13,}[^;]*$|^([^;]*;){,11}[^;]*$)" /dev/shm/all_tickets.orig.txt > all_tickets.orig.txt.semicolonbad.txt &
 #egrep -v "(^([^;]*;){13,}[^;]*$|^([^;]*;){,11}[^;]*$)" /dev/shm/all_tickets.orig.txt > all_tickets.orig.txt.semicolongood.txt &
 
+#wget $OPENADDR_URL
+#awk -F',' '{print $1","$2","$
 
 sudo su postgres -c "psql -p 5432 < $SQLDIR/init_db.sql"
 sql_from_file create_tables.sql
 sql_from_file load_from_files.sql
 sql_from_file corrections.sql
+sql_from_file make_postgrest_ready.sql

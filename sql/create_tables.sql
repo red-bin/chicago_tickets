@@ -1,5 +1,3 @@
-BEGIN ;
-
 CREATE TABLE corrections (
     id SERIAL PRIMARY KEY, 
     field_type TEXT, 
@@ -19,28 +17,27 @@ CREATE TABLE violations (
     description TEXT,
     cost FLOAT) ;
 
-CREATE TABLE chicago_addresses (
+CREATE TABLE chicago_addrs (
     id SERIAL PRIMARY KEY,
-    address TEXT,
-    address_number INTEGER,
+    addrstr_raw TEXT,
+    unit TEXT,
     street_dir TEXT,
     street_name TEXT,
     street_type TEXT,
-    latitude FLOAT,
-    longitude FLOAT) ;
+    scrap_pile TEXT,
+    longitude FLOAT,
+    latitude FLOAT) ;
 
 CREATE TABLE ticket_addrs (
     id SERIAL PRIMARY KEY,
     addrstr_raw TEXT,
     addrstr_current TEXT,
-    parse_state TEXT,
     street_num INTEGER,
     street_dir TEXT,
     street_name TEXT,
     street_type TEXT,
     scrap_pile TEXT,
-    latitude FLOAT,
-    longitude FLOAT,
+    chicago_addr_id INTEGER REFERENCES chicago_addrs,
     correction_id INTEGER REFERENCES corrections ) ;
 
 CREATE TABLE tickets (
@@ -67,13 +64,3 @@ create table street_ranges (
     suffix_dir CHAR(2),
     min_address INTEGER,
     max_address INTEGER);
-    
-alter table chicago_addresses owner to "tickets" ;                     
-alter table tickets owner to "tickets" ;
-alter table violations owner to "tickets" ;
-alter table corrections owner to "tickets" ;
-alter table street_ranges owner to "tickets" ;
-alter table ticket_addrs owner to "tickets" ;
-alter table levens owner to "tickets" ;
-
-COMMIT ;

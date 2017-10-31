@@ -1,4 +1,4 @@
 DROP DATABASE tickets ;
 DROP ROLE tickets ;
-CREATE USER tickets PASSWORD 'tickets' ;
+CREATE USER tickets WITH PASSWORD 'tickets' SUPERUSER ;
 CREATE DATABASE tickets WITH OWNER tickets;
