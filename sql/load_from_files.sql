@@ -27,23 +27,38 @@ INSERT INTO violations (code, description, cost)
    FROM raw_tickets
    GROUP BY violation_code, violation_desc ;
 
-COPY ticket_addrs (addrstr_raw, street_num, street_dir, 
-                  street_name, street_type, scrap_pile)
-  FROM '/home/matt/data/tickets/parsed_addresses.csv'
-      WITH (FORMAT CSV, DELIMITER ',', NULL '', HEADER) ;
+COPY data_sources (alias, url)
+  FROM '/home/matt/git/chicago_tickets/data/data_sources.csv'
+  WITH (FORMAT CSV, DELIMITER ',', NULL '', HEADER) ;
 
-COPY chicago_addrs (addrstr_raw, unit, street_dir, 
-                  street_name, street_type, scrap_pile)
-  FROM '/home/matt/data/tickets/parsed_chi_addresses.csv'
-      WITH (FORMAT CSV, DELIMITER ',', NULL '', HEADER) ;
+INSERT INTO addresses (raw_addr, source)
+  SELECT 
+    DISTINCT(rt.violation_location), 'tickets'
+  FROM raw_tickets rt ;
+
+CREATE TEMPORARY TABLE chicago_addresses (
+  id serial PRIMARY KEY,
+  longitude FLOAT,
+  latitude FLOAT,
+  unit TEXT,
+  raw_addr TEXT,
+  zip INTEGER,
+  source TEXT) ;
+
+COPY chicago_addresses (longitude, latitude, unit, addr, zip, source)
+  FROM '/home/matt/git/chicago_tickets/data/chicago_addresses.csv'
+    WITH (FORMAT CSV, DELIMITER ',', NULL '', HEADER) ;
+
+INSERT INTO addresses (raw_addr, raw_unit, raw_longitude, raw_latitude, raw_zip)
+  SELECT DISTINCT(raw_addr) from chicago_addresses ca ;
 
 COPY levens (change_from, change_to, nleven)
   FROM '/home/matt/git/chicago_tickets/data/corrections/street_name_levens.csv'
-      WITH (FORMAT CSV, DELIMITER ',', NULL '', HEADER) ;
+    WITH (FORMAT CSV, DELIMITER ',', NULL '', HEADER) ;
 
 COPY street_ranges (full_name, direction, street, suffix, suffix_dir, min_address, max_address)
   FROM '/home/matt/git/chicago_tickets/data/street_ranges.csv'
-      WITH (FORMAT CSV, DELIMITER ',', NULL '', HEADER) ;
+    WITH (FORMAT CSV, DELIMITER ',', NULL '', HEADER) ;
 
 INSERT INTO tickets (ticket_number, violation_id,
                      addr_id, time, ticket_queue, unit, 
@@ -52,7 +67,7 @@ INSERT INTO tickets (ticket_number, violation_id,
   SELECT 
     r.ticket_number,
     v.id,
-    a.id,
+    at.id,
     to_timestamp(r.issue_date, 'MM/DD/YYYY HH12:MI am'),
     r.ticket_queue,
     r.unit,
@@ -62,19 +77,10 @@ INSERT INTO tickets (ticket_number, violation_id,
     r.plate_number,
     r.car_make,
     r.hearing_dispo
-  FROM 
-    raw_tickets r,
-    ticket_addrs a, 
+  FROM raw_tickets r,
+    addr_tokens at, 
     violations v
-  WHERE 
-    r.violation_location = a.addrstr_raw
-    and v.code = r.violation_code 
-    and v.description = r.violation_desc ;
-COMMIT ;
-
-BEGIN ;
-COPY chicago_addrs (longitude,latitude,addrstr_raw,unit)
-  FROM '/home/matt/git/chicago_tickets/data/chicago_addresses.csv'
-      WITH (FORMAT CSV, DELIMITER ',', NULL '', HEADER) ;
-
+  WHERE r.violation_location = at.token_str
+    AND v.code = r.violation_code 
+    AND v.description = r.violation_desc ;
 COMMIT ;

@@ -10,7 +10,7 @@ CREATE VIEW tickets_view AS
           v.description,
           v.cost,
  
-          ta.addrstr_raw,
+          ta.raw_addr,
           ta.street_num,
           ta.street_dir,
           ta.street_name,
@@ -26,8 +26,8 @@ CREATE VIEW tickets_view AS
           t.badge
   
     FROM public.tickets t,
-         public.ticket_addrs ta,
-         public.chicago_addrs ca,
+         public.addresses ta,
+         public.addresses ca,
          public.violations v
         
     WHERE 

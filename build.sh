@@ -25,11 +25,15 @@ function download_data() {
 #egrep "(^([^;]*;){13,}[^;]*$|^([^;]*;){,11}[^;]*$)" /dev/shm/all_tickets.orig.txt > all_tickets.orig.txt.semicolonbad.txt &
 #egrep -v "(^([^;]*;){13,}[^;]*$|^([^;]*;){,11}[^;]*$)" /dev/shm/all_tickets.orig.txt > all_tickets.orig.txt.semicolongood.txt &
 
-#wget $OPENADDR_URL
-#awk -F',' '{print $1","$2","$
+#openaddr
+#unzip -p openaddr-collected-us_midwest.zip us/il/cook.csv | awk -F',' '$6 == "Chicago" {print $1","$2","$3","$4","$9",open_addrs"}' > chicago_addresses.csv 
 
 sudo su postgres -c "psql -p 5432 < $SQLDIR/init_db.sql"
 sql_from_file create_tables.sql
 sql_from_file load_from_files.sql
-sql_from_file corrections.sql
-sql_from_file make_postgrest_ready.sql
+
+sql_from_file pre_parse.sql
+utils/parse_rawaddrs.py
+sql_from_file post_parse.sql
+#sql_from_file corrections.sql
+#sql_from_file make_postgrest_ready.sql

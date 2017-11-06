@@ -1,9 +1,22 @@
+CREATE TABLE token_types (
+    id SERIAL PRIMARY KEY,
+    token_type TEXT) ;
+
+INSERT INTO token_types (token_type) VALUES
+    ('raw_addr'),
+    ('unit'),
+    ('direction'),
+    ('street_name'),
+    ('suffix'),
+    ('scrap'),
+    ('zip') ;
+
 CREATE TABLE corrections (
     id SERIAL PRIMARY KEY, 
-    field_type TEXT, 
     change_from TEXT, 
     change_to TEXT, 
-    mod_type TEXT ) ;
+    token_type_id INTEGER REFERENCES token_types, 
+    mod_type TEXT) ;
 
 CREATE TABLE levens (
   id SERIAL PRIMARY KEY,
@@ -17,34 +30,39 @@ CREATE TABLE violations (
     description TEXT,
     cost FLOAT) ;
 
-CREATE TABLE chicago_addrs (
+CREATE TABLE addr_tokens (
     id SERIAL PRIMARY KEY,
-    addrstr_raw TEXT,
-    unit TEXT,
-    street_dir TEXT,
-    street_name TEXT,
-    street_type TEXT,
-    scrap_pile TEXT,
-    longitude FLOAT,
-    latitude FLOAT) ;
+    token_str TEXT,
+    token_type TEXT,
+    correction_id INTEGER REFERENCES corrections) ;
 
-CREATE TABLE ticket_addrs (
+CREATE TABLE data_sources (
     id SERIAL PRIMARY KEY,
-    addrstr_raw TEXT,
-    addrstr_current TEXT,
-    street_num INTEGER,
-    street_dir TEXT,
-    street_name TEXT,
-    street_type TEXT,
-    scrap_pile TEXT,
-    chicago_addr_id INTEGER REFERENCES chicago_addrs,
-    correction_id INTEGER REFERENCES corrections ) ;
+    alias TEXT,
+    url TEXT) ; 
+
+CREATE TABLE addresses (
+    id SERIAL PRIMARY KEY,
+    raw_addr TEXT,
+    raw_unit TEXT,
+    raw_direction TEXT,
+    raw_name TEXT,
+    raw_suffix TEXT,
+    raw_longitude FLOAT,
+    raw_latitude FLOAT,
+    raw_zip INTEGER,
+    unit_id INTEGER REFERENCES addr_tokens,
+    dir_id INTEGER REFERENCES addr_tokens,
+    name_id INTEGER REFERENCES addr_tokens,
+    suffix_id INTEGER REFERENCES addr_tokens,
+    scraps_id INTEGER REFERENCES addr_tokens,
+    source TEXT) ;
 
 CREATE TABLE tickets (
   id SERIAL PRIMARY KEY,
   ticket_number BIGINT,
   violation_id INTEGER REFERENCES violations(id),
-  addr_id INTEGER REFERENCES ticket_addrs(id),
+  addr_id INTEGER REFERENCES addresses(id),
   time TIMESTAMP,
   ticket_queue CHAR(20),
   unit CHAR(20),
