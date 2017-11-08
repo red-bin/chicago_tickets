@@ -19,7 +19,7 @@ CREATE TEMPORARY TABLE raw_tickets (
 COPY raw_tickets (ticket_number, plate_number, license_state, license_type, 
                   car_make, issue_date, violation_location, violation_code, 
                   violation_desc, badge, unit, ticket_queue, hearing_dispo)
-  FROM '/home/matt/data/tickets/parking/all_tickets.orig.txt.semicolongood.testing.txt' 
+  FROM '/home/matt/data/tickets/parking/all_tickets.orig.txt.semicolongood.txt' 
   WITH (FORMAT CSV, DELIMITER ';', NULL '', QUOTE '|', HEADER) ;
 
 INSERT INTO violations (code, description, cost)
@@ -45,12 +45,15 @@ CREATE TEMPORARY TABLE chicago_addresses (
   zip INTEGER,
   source TEXT) ;
 
-COPY chicago_addresses (longitude, latitude, unit, addr, zip, source)
+COPY chicago_addresses (longitude, latitude, unit, raw_addr, zip, source)
   FROM '/home/matt/git/chicago_tickets/data/chicago_addresses.csv'
     WITH (FORMAT CSV, DELIMITER ',', NULL '', HEADER) ;
 
+INSERT INTO addr_tokens (token_str, token_type)
+  (SELECT DISTINCT(raw_addr),'raw_addr' from chicago_addresses) ;
+
 INSERT INTO addresses (raw_addr, raw_unit, raw_longitude, raw_latitude, raw_zip)
-  SELECT DISTINCT(raw_addr) from chicago_addresses ca ;
+  SELECT raw_addr, unit, longitude, latitude, zip from chicago_addresses ca ;
 
 COPY levens (change_from, change_to, nleven)
   FROM '/home/matt/git/chicago_tickets/data/corrections/street_name_levens.csv'

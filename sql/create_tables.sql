@@ -32,6 +32,7 @@ CREATE TABLE violations (
 
 CREATE TABLE addr_tokens (
     id SERIAL PRIMARY KEY,
+    raw_addr_id INTEGER REFERENCES addr_tokens,
     token_str TEXT,
     token_type TEXT,
     correction_id INTEGER REFERENCES corrections) ;
@@ -51,11 +52,14 @@ CREATE TABLE addresses (
     raw_longitude FLOAT,
     raw_latitude FLOAT,
     raw_zip INTEGER,
+    raw_addr_id INTEGER REFERENCES addr_tokens,
     unit_id INTEGER REFERENCES addr_tokens,
     dir_id INTEGER REFERENCES addr_tokens,
     name_id INTEGER REFERENCES addr_tokens,
     suffix_id INTEGER REFERENCES addr_tokens,
     scraps_id INTEGER REFERENCES addr_tokens,
+    longitude_id INTEGER REFERENCES addr_tokens,
+    latitude_id INTEGER REFERENCES addr_tokens,
     source TEXT) ;
 
 CREATE TABLE tickets (

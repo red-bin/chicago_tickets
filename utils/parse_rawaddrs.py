@@ -11,7 +11,7 @@ def postgres_conn():
     return conn
 
 def pull_addresses(cursor):
-    sql = "SELECT DISTINCT(raw_addr) FROM addresses"
+    sql = "SELECT DISTINCT(raw_addr) FROM addresses ORDER BY raw_addr"
     cursor.execute(sql)
     ret = (i[0] for i in cursor.fetchall() )
 

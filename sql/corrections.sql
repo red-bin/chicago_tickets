@@ -1,8 +1,3 @@
-COPY street_ranges (full_name, direction, street, suffix,
-                  suffix_dir, min_address, max_address)
-  FROM '/home/matt/data/tickets/street_ranges.csv'
-  WITH (FORMAT CSV, DELIMITER ',', NULL '', HEADER) ;
-
 INSERT INTO corrections
   (change_from, change_to, token_type_id, mod_type)
   (SELECT change_from, change_to, tt.id, 'levens'
@@ -29,19 +24,19 @@ UPDATE addresses
   AND corrections.token_type_id = tt.id
   AND street_type != '' ;
 
-UPDATE addresses
-  SET street_type = sq.suffix
-  FROM (SELECT distinct(s1.street), s1.suffix, s1.min_address, s1.max_address
-          FROM street_ranges s1,
-          (SELECT street, count(distinct(suffix)) AS suffix_count
-            FROM street_ranges GROUP BY street) s2
-            WHERE s1.street = s2.street 
-          AND s2.suffix_count = 1) sq,
-          data_sources ds
-      
-  WHERE sq.street = addresses.street_name
-  AND addresses.street_type IS NULL 
-  AND addresses.street_num >= sq.min_address
-  AND addresses.street_num <= sq.max_address ;
-  AND addresses.data_source = ds.id
-  AND ds.alias in ('tickets', 'openaddr')
+--UPDATE addresses
+  --SET street_type = sq.suffix
+  --FROM (SELECT distinct(s1.street), s1.suffix, s1.min_address, s1.max_address
+          --FROM street_ranges s1,
+          --(SELECT street, count(distinct(suffix)) AS suffix_count
+            --FROM street_ranges GROUP BY street) s2
+            --WHERE s1.street = s2.street 
+          --AND s2.suffix_count = 1) sq,
+          --data_sources ds
+
+  --WHERE sq.street = addresses.street_name
+  --AND addresses.street_type IS NULL 
+  --AND addresses.street_num >= sq.min_address
+  --AND addresses.street_num <= sq.max_address ;
+  --AND addresses.data_source = ds.id
+  --AND ds.alias in ('tickets', 'openaddr')
