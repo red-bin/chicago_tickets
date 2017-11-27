@@ -1,5 +1,54 @@
-BEGIN ;
 
+--CREATE FUNCTION insert_raw_addr(in TEXT) RETURNS integer 
+--  LANGUAGE plpgsql ;
+--BEGIN ;
+
+CREATE OR REPLACE FUNCTION insertrawaddr()
+RETURNS TRIGGER AS $$
+  DECLARE
+    raw_addr_id int;
+BEGIN
+  SELECT id FROM 
+    (INSERT INTO raw_addresses (raw_addr, source) 
+     VALUES (NEW.violation_location,'tickets') 
+     RETURNING id) ;
+  INTO raw_addr_id ;
+  INSERT INTO tickets (ticket_number, violation_id, raw_addr_id, 
+                       time, ticket_queue, unit, badge, licence_type
+                       license_state, license_number, car_make, hearing_dispo)
+  SELECT
+    NEW.ticket_number,
+    v.id,
+    raw_addr_id,
+    NEW.plate_number,
+    NEW.license_state,
+    NEW.license_type,
+    NEW.car_make,
+    NEW.issue_date,
+    NEW.violation_location,
+    NEW.violation_code,
+    NEW.violation_desc,
+    NEW.badge,
+    NEW.unit,
+    NEW.ticket_queue,
+    NEW.hearing_dispo
+  FROM raw_tickets r,
+    violations v,
+    NEW
+  WHERE r.violation_location = at.token_str
+    AND v.code = r.violation_code 
+    AND v.description = r.violation_desc ;
+  RETURN NULL ;
+END;
+$$ LANGUAGE plpgsql;
+
+\set chicago_addresses_path '\'' :datadir 'chicago_addresses.csv\''
+\set tickets_path '\'' :datadir 'all_tickets.orig.txt.semicolongood.testing.txt\''
+\set data_sources_path '\'' :datadir 'data_sources.csv\''
+\set levens_path '\'' :datadir 'corrections/levens.csv\''
+\set street_ranges_path '\'' :datadir 'street_ranges.csv\''
+
+--import orig. tickets data into temp table
 CREATE TEMPORARY TABLE raw_tickets (
   id SERIAL PRIMARY KEY,
   ticket_number BIGINT,
@@ -16,10 +65,13 @@ CREATE TEMPORARY TABLE raw_tickets (
   ticket_queue TEXT,
   hearing_dispo TEXT) ;
 
+CREATE TRIGGER ticket_addr_trigger AFTER INSERT ON raw_tickets 
+for each row EXECUTE PROCEDURE insertrawaddr();
+
 COPY raw_tickets (ticket_number, plate_number, license_state, license_type, 
                   car_make, issue_date, violation_location, violation_code, 
                   violation_desc, badge, unit, ticket_queue, hearing_dispo)
-  FROM '/home/matt/data/tickets/parking/all_tickets.orig.txt.semicolongood.txt' 
+  FROM :tickets_path
   WITH (FORMAT CSV, DELIMITER ';', NULL '', QUOTE '|', HEADER) ;
 
 INSERT INTO violations (code, description, cost)
@@ -28,13 +80,8 @@ INSERT INTO violations (code, description, cost)
    GROUP BY violation_code, violation_desc ;
 
 COPY data_sources (alias, url)
-  FROM '/home/matt/git/chicago_tickets/data/data_sources.csv'
+  FROM :data_sources_path
   WITH (FORMAT CSV, DELIMITER ',', NULL '', HEADER) ;
-
-INSERT INTO addresses (raw_addr, source)
-  SELECT 
-    DISTINCT(rt.violation_location), 'tickets'
-  FROM raw_tickets rt ;
 
 CREATE TEMPORARY TABLE chicago_addresses (
   id serial PRIMARY KEY,
@@ -46,44 +93,20 @@ CREATE TEMPORARY TABLE chicago_addresses (
   source TEXT) ;
 
 COPY chicago_addresses (longitude, latitude, unit, raw_addr, zip, source)
-  FROM '/home/matt/git/chicago_tickets/data/chicago_addresses.csv'
+  FROM :chicago_addresses_path
     WITH (FORMAT CSV, DELIMITER ',', NULL '', HEADER) ;
-
-INSERT INTO addr_tokens (token_str, token_type)
-  (SELECT DISTINCT(raw_addr),'raw_addr' from chicago_addresses) ;
 
 INSERT INTO addresses (raw_addr, raw_unit, raw_longitude, raw_latitude, raw_zip)
-  SELECT raw_addr, unit, longitude, latitude, zip from chicago_addresses ca ;
+  SELECT raw_addr, unit, longitude, latitude, zip 
+  FROM chicago_addresses ;
 
 COPY levens (change_from, change_to, nleven)
-  FROM '/home/matt/git/chicago_tickets/data/corrections/street_name_levens.csv'
+  FROM :levens_path
     WITH (FORMAT CSV, DELIMITER ',', NULL '', HEADER) ;
 
-COPY street_ranges (full_name, direction, street, suffix, suffix_dir, min_address, max_address)
-  FROM '/home/matt/git/chicago_tickets/data/street_ranges.csv'
-    WITH (FORMAT CSV, DELIMITER ',', NULL '', HEADER) ;
+COPY street_ranges (full_name, direction, street, suffix,
+                  suffix_dir, min_address, max_address)
+  FROM :street_ranges_path
+  WITH (FORMAT CSV, DELIMITER ',', NULL '', HEADER) ;
 
-INSERT INTO tickets (ticket_number, violation_id,
-                     addr_id, time, ticket_queue, unit, 
-                     badge, license_type, license_state, 
-                     license_number, car_make, hearing_dispo)
-  SELECT 
-    r.ticket_number,
-    v.id,
-    at.id,
-    to_timestamp(r.issue_date, 'MM/DD/YYYY HH12:MI am'),
-    r.ticket_queue,
-    r.unit,
-    r.badge,
-    r.license_type,
-    r.license_state,
-    r.plate_number,
-    r.car_make,
-    r.hearing_dispo
-  FROM raw_tickets r,
-    addr_tokens at, 
-    violations v
-  WHERE r.violation_location = at.token_str
-    AND v.code = r.violation_code 
-    AND v.description = r.violation_desc ;
 COMMIT ;

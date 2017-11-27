@@ -4,12 +4,10 @@ import csv
 import distance
 import psycopg2
 
-from pprint import pprint
-
 street_range_filepath = '~/git/chicago_tickets/data/Chicago_Street_Names.csv'
 
 def postgres_conn():
-    connstr = "port=5433 dbname=tickets host=%s user=tickets password=tickets" % "localhost"
+    connstr = "port=5432 dbname=tickets host=%s user=tickets password=tickets" % "localhost"
     conn = psycopg2.connect(connstr)
 
     return conn
@@ -18,7 +16,7 @@ def valid_streets(db):
     streets = []
     cursor = db.cursor()
 
-    cursor.execute("SELECT DISTINCT(street) FROM street_ranges ORDER BY DISTINCT(street)")
+    cursor.execute("SELECT DISTINCT(street) FROM street_ranges ORDER BY street")
     [ streets.append(l[0].strip()) for l in cursor.fetchall() if l ]
 
     return streets
@@ -27,7 +25,13 @@ def ticket_streets(db):
     streets = []
     cursor = db.cursor()
 
-    cursor.execute("SELECT DISTINCT(street_name) FROM ticket_addrs")
+    sql_str = """SELECT DISTINCT(at.token_str) 
+                 FROM addr_tokens at, addr_tokens rat, addresses a
+                 WHERE at.token_type = 'street_name'
+                 AND at.raw_addr_id = rat.id
+                 AND a.raw_addr_id = rat.id"""
+
+    cursor.execute(sql_str)
     [ streets.append(l[0].strip()) for l in cursor.fetchall() if l and l[0] ]
 
     return streets
@@ -57,14 +61,12 @@ def closest_levenset(bad_list, good_list):
     for bad in bad_list:
         count+=1
         closest = closest_leven(bad, good_list)
-        print(closest)
         yield bad, closest
 
 def useful_levens(levenset, max_val=.2):
     for bad, levens in levenset:
         for good, leven_val in levens:
             if leven_val < .2:
-                print(bad, good, leven_val)
                 yield bad, good, leven_val
                 continue #todo: generalize
 

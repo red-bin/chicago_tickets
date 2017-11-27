@@ -1,3 +1,5 @@
+\set parsed_addresses_path '\'':datadir 'parsed_addresses.csv\''
+
 BEGIN ;
 
 CREATE TEMPORARY TABLE parsed_temp (
@@ -11,7 +13,7 @@ CREATE TEMPORARY TABLE parsed_temp (
 
 COPY parsed_temp (raw_addr, street_num, street_dir,
                   street_name, street_type, scrap_pile)
-  FROM '/home/matt/git/chicago_tickets/data/parsed_addresses.csv'
+  FROM :parsed_addresses_path
     WITH (FORMAT CSV, DELIMITER ',', NULL '', HEADER) ;
 
 --generalizethiskthx

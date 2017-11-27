@@ -1,2 +1,3 @@
 raw_tickets,http://data.mchap.io/tickets/all_tickets.orig.txt.gz
-openaddrs,http://data.mchap.io/tickets/all_tickets.orig.txt.gz
+openaddrs,https://s3.amazonaws.com/data.openaddresses.io/openaddr-collected-us_midwest.zip
+street_ranges,https://data.cityofchicago.org/api/views/i6bp-fvbx/rows.csv
