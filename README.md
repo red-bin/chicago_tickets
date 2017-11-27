@@ -52,4 +52,5 @@ Project to parse and map 38 million parking tickets from 2003 and 2016. The info
 | Orig. data, 2003-2008 | http://data.mchap.io/tickets/A50462_TcktsIssd_200303-200812.txt.gz  | 
 | Orig. data, 2009-2016 | http://data.mchap.io/tickets/A50462_TcktsIssdSince2009.txt.gz       | 
 | Orig. data, 2016-2016 | http://data.mchap.io/tickets/A50462_TcktsIssd_201603-todate.txt.gz  | 
+| smartystreets results | http://data.mchap.io/tickets/all_streets_smartystreets.results.json.gz  | 
   
