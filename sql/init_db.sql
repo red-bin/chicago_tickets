@@ -1,4 +1,5 @@
 DROP DATABASE tickets ;
+DROP OWNED BY tickets CASCADE ;
 DROP ROLE tickets ;
 CREATE USER tickets WITH PASSWORD 'tickets' SUPERUSER ;
 CREATE DATABASE tickets WITH OWNER tickets;

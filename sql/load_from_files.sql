@@ -1,40 +1,37 @@
 
 --CREATE FUNCTION insert_raw_addr(in TEXT) RETURNS integer 
 --  LANGUAGE plpgsql ;
---BEGIN ;
+BEGIN ;
 
 CREATE OR REPLACE FUNCTION insertrawaddr()
-RETURNS TRIGGER AS $$
-  DECLARE
-    raw_addr_id int;
+  RETURNS TRIGGER AS $$
+  DECLARE new_raw_addr_id int ;
 BEGIN
-  SELECT id FROM 
+  WITH new_raw_addr_id AS
     (INSERT INTO raw_addresses (raw_addr, source) 
      VALUES (NEW.violation_location,'tickets') 
-     RETURNING id) ;
-  INTO raw_addr_id ;
-  INSERT INTO tickets (ticket_number, violation_id, raw_addr_id, 
-                       time, ticket_queue, unit, badge, licence_type
-                       license_state, license_number, car_make, hearing_dispo)
+     ON CONFLICT DO NOTHING
+     RETURNING id) 
+  INSERT INTO tickets 
+    (ticket_number, violation_id, raw_addr_id, 
+     time, ticket_queue, unit, badge,
+     license_type, license_state, license_number, car_make, hearing_dispo)
   SELECT
-    NEW.ticket_number,
+    r.ticket_number,
     v.id,
-    raw_addr_id,
-    NEW.plate_number,
-    NEW.license_state,
-    NEW.license_type,
-    NEW.car_make,
-    NEW.issue_date,
-    NEW.violation_location,
-    NEW.violation_code,
-    NEW.violation_desc,
-    NEW.badge,
-    NEW.unit,
-    NEW.ticket_queue,
-    NEW.hearing_dispo
+    new_raw_addr_id,
+    to_timestamp(r.issue_date, 'MM/DD/YYYY HH12:MI am'),
+    r.ticket_queue,
+    r.unit,
+    r.badge,
+    r.license_type,
+    r.license_state,
+    r.plate_number,
+    r.car_make,
+    r.hearing_dispo
   FROM raw_tickets r,
     violations v,
-    NEW
+    addr_tokens at
   WHERE r.violation_location = at.token_str
     AND v.code = r.violation_code 
     AND v.description = r.violation_desc ;
@@ -49,7 +46,7 @@ $$ LANGUAGE plpgsql;
 \set street_ranges_path '\'' :datadir 'street_ranges.csv\''
 
 --import orig. tickets data into temp table
-CREATE TEMPORARY TABLE raw_tickets (
+CREATE TABLE raw_tickets (
   id SERIAL PRIMARY KEY,
   ticket_number BIGINT,
   plate_number TEXT,
@@ -66,7 +63,7 @@ CREATE TEMPORARY TABLE raw_tickets (
   hearing_dispo TEXT) ;
 
 CREATE TRIGGER ticket_addr_trigger AFTER INSERT ON raw_tickets 
-for each row EXECUTE PROCEDURE insertrawaddr();
+  FOR EACH ROW EXECUTE PROCEDURE insertrawaddr();
 
 COPY raw_tickets (ticket_number, plate_number, license_state, license_type, 
                   car_make, issue_date, violation_location, violation_code, 
@@ -96,9 +93,10 @@ COPY chicago_addresses (longitude, latitude, unit, raw_addr, zip, source)
   FROM :chicago_addresses_path
     WITH (FORMAT CSV, DELIMITER ',', NULL '', HEADER) ;
 
-INSERT INTO addresses (raw_addr, raw_unit, raw_longitude, raw_latitude, raw_zip)
-  SELECT raw_addr, unit, longitude, latitude, zip 
-  FROM chicago_addresses ;
+INSERT INTO raw_addresses (raw_addr, raw_unit, raw_longitude, raw_latitude, raw_zip, source)
+  SELECT raw_addr, unit, longitude, latitude, zip, 'chicago_addresses'
+  FROM chicago_addresses 
+  ON CONFLICT DO NOTHING;
 
 COPY levens (change_from, change_to, nleven)
   FROM :levens_path
