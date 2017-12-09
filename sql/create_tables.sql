@@ -69,7 +69,7 @@ CREATE TABLE tickets (
   id SERIAL PRIMARY KEY,
   ticket_number BIGINT,
   violation_id INTEGER REFERENCES violations(id),
-  raw_addr_id INTEGER REFERENCES addr_tokens(id),
+  raw_addr_id INTEGER REFERENCES raw_addresses(id),
   time TIMESTAMP,
   ticket_queue CHAR(20),
   unit CHAR(20),
