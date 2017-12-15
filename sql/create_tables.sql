@@ -1,3 +1,8 @@
+CREATE TABLE data_sources (
+  id SERIAL PRIMARY KEY,
+  alias TEXT,
+  url TEXT) ; 
+
 CREATE TABLE token_types (
   id SERIAL PRIMARY KEY,
   token_type TEXT) ;
@@ -21,7 +26,16 @@ CREATE TABLE corrections (
   id SERIAL PRIMARY KEY, 
   change_from TEXT, 
   change_to TEXT, 
-  leven_id INTEGER REFERENCES levens) ;
+  token_type TEXT,
+  source TEXT,
+  metadata JSONB,
+  UNIQUE (change_from, change_to, token_type, source)) ;
+
+CREATE TABLE addr_tokens (
+  id SERIAL PRIMARY KEY,
+  token_str TEXT,
+  token_type TEXT,
+  correction_id INTEGER REFERENCES corrections ) ;
 
 CREATE TABLE violations (
   id SERIAL PRIMARY KEY,
@@ -31,28 +45,29 @@ CREATE TABLE violations (
 
 CREATE TABLE raw_addresses (
   id SERIAL PRIMARY KEY,
-  raw_addr TEXT,
-  raw_unit TEXT,
-  raw_direction TEXT,
-  raw_name TEXT,
-  raw_suffix TEXT,
-  raw_longitude FLOAT,
-  raw_latitude FLOAT,
-  raw_zip INTEGER,
-  source TEXT,
-  UNIQUE (raw_addr, source)) ;
+  raw_addr_id INTEGER REFERENCES addr_tokens(id),
+  raw_unit_id INTEGER REFERENCES addr_tokens(id),
+  raw_unit_start_id INTEGER REFERENCES addr_tokens(id),
+  raw_unit_end_id INTEGER REFERENCES addr_tokens(id),
+  raw_direction_id INTEGER REFERENCES addr_tokens(id),
+  raw_street_name_id INTEGER REFERENCES addr_tokens(id),
+  raw_suffix_id INTEGER REFERENCES addr_tokens(id),
+  raw_longitude_id INTEGER REFERENCES addr_tokens(id),
+  raw_latitude_id INTEGER REFERENCES addr_tokens(id),
+  raw_zip_id INTEGER REFERENCES addr_tokens(id),
+  correction_id INTEGER REFERENCES corrections(id),
+  source_id INTEGER REFERENCES data_sources(id),
+  UNIQUE (raw_addr_id, source_id)) ;
 
-CREATE TABLE addr_tokens (
+CREATE TABLE parsed_tokens (
   id SERIAL PRIMARY KEY,
-  raw_addr_id INTEGER REFERENCES raw_addresses,
-  token_str TEXT,
-  token_type TEXT,
-  correction_id INTEGER REFERENCES corrections ) ;
-
-CREATE TABLE data_sources (
-  id SERIAL PRIMARY KEY,
-  alias TEXT,
-  url TEXT) ; 
+  raw_addr_id INTEGER REFERENCES addr_tokens(id),
+  unit_id INTEGER REFERENCES addr_tokens(id),
+  dir_id INTEGER REFERENCES addr_tokens(id),
+  street_id INTEGER REFERENCES addr_tokens(id),
+  suffix_id INTEGER REFERENCES addr_tokens(id),
+  scrap_id INTEGER REFERENCES addr_tokens(id),
+  UNIQUE (raw_addr_id));
 
 CREATE TABLE addresses (
   id SERIAL PRIMARY KEY,
@@ -79,13 +94,3 @@ CREATE TABLE tickets (
   license_number CHAR(15),
   car_make CHAR(20),
   hearing_dispo CHAR(20)) ;
-
-create table street_ranges (
-  id SERIAL PRIMARY KEY,
-  full_name TEXT,
-  direction CHAR(1),
-  street TEXT,
-  suffix CHAR(4),
-  suffix_dir CHAR(2),
-  min_address INTEGER,
-  max_address INTEGER );

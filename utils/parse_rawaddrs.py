@@ -11,7 +11,9 @@ def postgres_conn():
     return conn
 
 def pull_addresses(cursor):
-    sql = "SELECT DISTINCT(raw_addr) FROM addresses ORDER BY raw_addr"
+    sql = """SELECT DISTINCT(token_str) FROM addr_tokens 
+           WHERE token_type = 'raw_addr' 
+           ORDER BY token_str"""
     cursor.execute(sql)
     ret = (i[0] for i in cursor.fetchall() )
 
@@ -90,7 +92,7 @@ valid_parsed = ( parsed_addr for parsed_addr in parsed if list(set(parsed_addr))
 
 fh = open('/home/matt/git/chicago_tickets/data/parsed_addresses.csv','w')
 
-header = ('raw_addr', 'street_num', 'street_dir', 'street_name', 'street_type', 'scrap_pile')
+header = ('raw_addr', 'unit', 'dir', 'street_name', 'suffix', 'scrap')
 
 writer = csv.writer(fh)
 writer.writerow(header)
