@@ -24,42 +24,42 @@ BEGIN
     
   INSERT INTO addr_tokens (token_str, token_type)
   VALUES (NEW.original, 'raw_addr')
-  ON CONFLICT DO NOTHING
+  ON CONFLICT (token_str, token_type) DO UPDATE SET token_str = NEW.original
   RETURNING id into new_raw_addr_id ;
 
   INSERT INTO addr_tokens (token_str, token_type)
   VALUES (NEW.unit, 'unit')
-  ON CONFLICT DO NOTHING
+  ON CONFLICT (token_str, token_type) DO UPDATE SET token_str = NEW.unit
   RETURNING id into new_unit_id ;
 
   INSERT INTO addr_tokens (token_str, token_type)
   VALUES (NEW.street_predirection, 'direction')
-  ON CONFLICT DO NOTHING
+  ON CONFLICT (token_str, token_type) DO UPDATE SET token_str = NEW.street_predirection
   RETURNING id into new_direction_id ;
 
   INSERT INTO addr_tokens (token_str, token_type)
   VALUES (NEW.street_name, 'street_name')
-  ON CONFLICT DO NOTHING
+  ON CONFLICT (token_str, token_type) DO UPDATE SET token_str = NEW.street_name
   RETURNING id into new_street_name_id ;
 
   INSERT INTO addr_tokens (token_str, token_type)
   VALUES (NEW.suffix, 'suffix')
-  ON CONFLICT DO NOTHING
+  ON CONFLICT (token_str, token_type) DO UPDATE SET token_str = NEW.suffix
   RETURNING id into new_suffix_id ;
 
   INSERT INTO addr_tokens (token_str, token_type)
   VALUES (NEW.longitude, 'longitude')
-  ON CONFLICT DO NOTHING
+  ON CONFLICT (token_str, token_type) DO UPDATE SET token_str = NEW.longitude
   RETURNING id into new_raw_addr_id ;
 
   INSERT INTO addr_tokens (token_str, token_type)
   VALUES (NEW.latitude, 'latitude')
-  ON CONFLICT DO NOTHING
+  ON CONFLICT (token_str, token_type) DO UPDATE SET token_str = NEW.latitude
   RETURNING id into new_raw_addr_id ;
 
   INSERT INTO addr_tokens (token_str, token_type)
   VALUES (NEW.zipcode, 'zip')
-  ON CONFLICT DO NOTHING
+  ON CONFLICT (token_str, token_type) DO UPDATE SET token_str = NEW.zipcode
   RETURNING id into new_raw_addr_id ;
 
   SELECT id FROM data_sources
@@ -77,7 +77,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TEMPORARY TABLE smartystreets (
+CREATE TABLE smartystreets (
   original TEXT,
   delivery_line_1 TEXT,
   delivery_line_2 TEXT,
@@ -98,15 +98,15 @@ COPY smartystreets (original,delivery_line_1,delivery_line_2,unit,street_predire
   FROM '/home/matt/git/chicago_tickets/data/smartystreet_test.csv'
   WITH (FORMAT CSV, DELIMITER ',', NULL '', HEADER) ;
 
-CREATE INDEX raw_addr_idx ON raw_addresses(raw_addr, source);
 CREATE INDEX corrections_idx ON corrections(change_from);
 
-UPDATE raw_addresses
-SET correction_id = c.id
-FROM corrections c
-WHERE c.change_from = raw_addr 
-AND raw_addresses.source = 'tickets' ;
 COMMIT ;
+--UPDATE raw_addresses
+--SET correction_id = c.id
+--FROM corrections c
+--WHERE c.change_from = raw_addr 
+--AND raw_addresses.source = 'tickets' ;
+--COMMIT ;
 
 --INSERT INTO corrections
   --(change_from, change_to, token_type_id, mod_type)

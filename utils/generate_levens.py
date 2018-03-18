@@ -28,7 +28,7 @@ def ticket_streets(db):
     sql_str = """SELECT DISTINCT(at.token_str) 
                  FROM addr_tokens at, addr_tokens rat, addresses a
                  WHERE at.token_type = 'street_name'
-                 AND at.raw_addr_id = rat.id
+                 --AND at.raw_addr_id = rat.id
                  AND a.raw_addr_id = rat.id"""
 
     cursor.execute(sql_str)

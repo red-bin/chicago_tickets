@@ -23,33 +23,33 @@ DECLARE
 
 BEGIN
   INSERT INTO addr_tokens (token_str, token_type)
-  VALUES (NEW.raw_addr, 'raw_addr')
-  ON CONFLICT DO NOTHING
+  VALUES (NEW.raw_addr, 'raw_addr') 
+  ON CONFLICT (token_str, token_type) DO UPDATE SET token_str = NEW.raw_addr
   RETURNING id into new_raw_addr_id ;
 
   INSERT INTO addr_tokens (token_str, token_type)
   VALUES (NEW.unit, 'unit')
-  ON CONFLICT DO NOTHING
+  ON CONFLICT (token_str, token_type) DO UPDATE SET token_str = NEW.unit
   RETURNING id into new_unit_id ;
 
   INSERT INTO addr_tokens (token_str, token_type)
   VALUES (NEW.dir, 'direction')
-  ON CONFLICT DO NOTHING
+  ON CONFLICT (token_str, token_type) DO UPDATE SET token_str = NEW.dir
   RETURNING id into new_dir_id ;
 
   INSERT INTO addr_tokens (token_str, token_type)
   VALUES (NEW.street_name, 'street_name')
-  ON CONFLICT DO NOTHING
+  ON CONFLICT (token_str, token_type) DO UPDATE SET token_str = NEW.street_name
   RETURNING id into new_street_id ;
 
   INSERT INTO addr_tokens (token_str, token_type)
   VALUES (NEW.suffix, 'suffix')
-  ON CONFLICT DO NOTHING
+  ON CONFLICT (token_str, token_type) DO UPDATE SET token_str = NEW.suffix
   RETURNING id into new_suffix_id ;
 
   INSERT INTO addr_tokens (token_str, token_type)
   VALUES (NEW.scrap, 'scrap')
-  ON CONFLICT DO NOTHING
+  ON CONFLICT (token_str, token_type) DO UPDATE SET token_str = NEW.scrap
   RETURNING id into new_scrap_id ;
 
   INSERT INTO parsed_tokens (raw_addr_id, unit_id, dir_id, street_id, suffix_id, scrap_id)
@@ -66,3 +66,5 @@ COPY parsed_temp (raw_addr, unit, dir,
                   street_name, suffix, scrap)
   FROM :parsed_addresses_path
     WITH (FORMAT CSV, DELIMITER ',', NULL '') ;
+
+COMMIT ;

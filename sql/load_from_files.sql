@@ -8,7 +8,7 @@ DECLARE
 BEGIN
   raw_addr_token_id := create_addr_token(NEW.violation_location, 'raw_addr') ;
   INSERT INTO raw_addresses (raw_addr_id, source_id)
-  VALUES (raw_addr_token_id, NULL) 
+  VALUES (raw_addr_token_id, 1) 
   ON CONFLICT DO NOTHING
   RETURNING id into raw_addresses_id ;
   
@@ -38,7 +38,7 @@ DECLARE token_id int ;
 BEGIN
   INSERT INTO addr_tokens (token_str, token_type) 
   VALUES (new_token_str, new_token_type)
-  ON CONFLICT DO NOTHING
+  ON CONFLICT (token_str, token_type) DO UPDATE SET token_str = new_token_str
   RETURNING id into token_id ;
   RETURN token_id ;
 END ;
@@ -93,7 +93,7 @@ COPY chicago_addresses (longitude, latitude, unit, raw_addr, zip, source)
   FROM :chicago_addresses_path
     WITH (FORMAT CSV, DELIMITER ',', NULL '', HEADER) ;
 
-CREATE TEMPORARY TABLE street_ranges (
+CREATE TABLE street_ranges (
   id SERIAL PRIMARY KEY,
   raw_addr TEXT,
   direction CHAR(1),

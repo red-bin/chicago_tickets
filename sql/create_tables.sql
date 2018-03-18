@@ -1,26 +1,53 @@
 CREATE TABLE data_sources (
   id SERIAL PRIMARY KEY,
-  alias TEXT,
-  url TEXT) ; 
+  alias TEXT NOT NULL,
+  url TEXT NOT NULL) ; 
 
 CREATE TABLE token_types (
   id SERIAL PRIMARY KEY,
-  token_type TEXT) ;
+  token_type TEXT NOT NULL) ;
 
-INSERT INTO token_types (token_type) VALUES
-  ('raw_addr'),
-  ('unit'),
-  ('direction'),
-  ('street_name'),
-  ('suffix'),
-  ('scrap'),
-  ('zip') ;
-
+--CREATE TABLE tokens (
+ -- token_str TEXT NOT NULL,
+  --token_type TEXT NOT NULL,
+  --source TEXT)
+  --PARTITION BY LIST (token_type) ;
+--
+--CREATE TABLE raw_addresses 
+  --PARTITION OF tokens
+  --FOR VALUES IN ('raw_addr')
+  --PARTITION BY list (source) ;
+--
+--CREATE TABLE units 
+  --PARTITION OF tokens 
+  --FOR VALUES IN ('unit')
+  --PARTITION BY LIST (source) ;
+--
+--CREATE TABLE directions 
+  --PARTITION OF tokens 
+  --FOR VALUES IN ('direction')
+  --PARTITION BY LIST (source) ;
+--
+--CREATE TABLE street_names 
+  --PARTITION OF tokens 
+  --FOR VALUES IN ('street_name')
+  --PARTITION BY LIST (source) ;
+--
+--CREATE TABLE suffixes
+  --PARTITION OF tokens 
+  --FOR VALUES IN ('suffix')
+  --PARTITION BY LIST (source) ;
+  --
+--CREATE TABLE scraps
+  --PARTITION OF tokens 
+  --FOR VALUES IN ('scrap')
+  --PARTITION BY LIST (source) ;
+  --
 CREATE TABLE levens (
   id SERIAL PRIMARY KEY,
   change_from TEXT NOT NULL,
-  change_to TEXT,
-  nleven FLOAT ) ;
+  change_to TEXT NOT NULL,
+  nleven FLOAT NOT NULL) ;
 
 CREATE TABLE corrections (
   id SERIAL PRIMARY KEY, 
@@ -33,9 +60,10 @@ CREATE TABLE corrections (
 
 CREATE TABLE addr_tokens (
   id SERIAL PRIMARY KEY,
-  token_str TEXT,
-  token_type TEXT,
-  correction_id INTEGER REFERENCES corrections ) ;
+  token_str TEXT NOT NULL,
+  token_type TEXT NOT NULL,
+  UNIQUE (token_str, token_type),
+  CHECK (token_str not like '')) ;
 
 CREATE TABLE violations (
   id SERIAL PRIMARY KEY,
