@@ -1,40 +1,5 @@
 BEGIN ;
 
-CREATE OR REPLACE FUNCTION smartystreets_post_update()
-  RETURNS TRIGGER AS $$
-DECLARE
-  new_raw_addr_id int ;
-  new_unit_id int ;
-  new_unit_start_id int ;
-  new_unit_end_id int ;
-  new_direction_id int ;
-  new_street_name_id int ;
-  new_suffix_id int ;
-  new_longitude_id int ;
-  new_latitude_id int ;
-  new_zip_id int ;
-  new_correction_id int ;
-  new_source_id int ;
-
-BEGIN
-  INSERT INTO corrections (change_from, change_to, token_type, source)
-  VALUES (initcap(NEW.original), NEW.delivery_line_1, 'raw_addr', 'smartystreets')
-  ON CONFLICT DO NOTHING
-  RETURNING id INTO new_correction_id ;
-    
-  INSERT INTO addr_tokens (token_str, token_type)
-  VALUES (NEW.original, 'raw_addr')
-  ON CONFLICT (token_str, token_type) DO UPDATE SET token_str = NEW.original
-  RETURNING id into new_raw_addr_id ;
-
-  INSERT INTO addr_tokens (token_str, token_type)
-  VALUES (NEW.unit, 'unit')
-  ON CONFLICT (token_str, token_type) DO UPDATE SET token_str = NEW.unit
-  RETURNING id into new_unit_id ;
-
-  INSERT INTO addr_tokens (token_str, token_type)
-  VALUES (NEW.street_predirection, 'direction')
-  ON CONFLICT (token_str, token_type) DO UPDATE SET token_str = NEW.street_predirection
   RETURNING id into new_direction_id ;
 
   INSERT INTO addr_tokens (token_str, token_type)
@@ -76,20 +41,6 @@ BEGIN
   RETURN NULL ;
 END;
 $$ LANGUAGE plpgsql;
-
-CREATE TABLE smartystreets (
-  original TEXT,
-  delivery_line_1 TEXT,
-  delivery_line_2 TEXT,
-  unit TEXT,
-  street_predirection TEXT,
-  street_name TEXT,
-  street_postdirection TEXT,
-  suffix TEXT,
-  zipcode TEXT,
-  latitude TEXT,
-  longitude TEXT 
-) ;
 
 CREATE TRIGGER smartystreets_trigger AFTER INSERT ON smartystreets
   FOR EACH ROW EXECUTE PROCEDURE smartystreets_post_update();

@@ -21,13 +21,15 @@ sudo service postgresql restart
 sudo su postgres -c "psql -p 5432 < $SQLDIR/init_db.sql"
 
 sql_from_file create_tables.sql
+sql_from_file setup_triggers.sql
 
 sql_from_file load_from_files.sql
-#
+
 echo "Tokenizing addresses"
 utils/parse_rawaddrs.py
 sql_from_file postparse.sql
-#
+
 utils/generate_levens.py
 sql_from_file corrections.sql
+
 #sql_from_file make_postgrest_ready.sql

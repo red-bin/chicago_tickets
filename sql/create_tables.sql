@@ -7,42 +7,6 @@ CREATE TABLE token_types (
   id SERIAL PRIMARY KEY,
   token_type TEXT NOT NULL) ;
 
---CREATE TABLE tokens (
- -- token_str TEXT NOT NULL,
-  --token_type TEXT NOT NULL,
-  --source TEXT)
-  --PARTITION BY LIST (token_type) ;
---
---CREATE TABLE raw_addresses 
-  --PARTITION OF tokens
-  --FOR VALUES IN ('raw_addr')
-  --PARTITION BY list (source) ;
---
---CREATE TABLE units 
-  --PARTITION OF tokens 
-  --FOR VALUES IN ('unit')
-  --PARTITION BY LIST (source) ;
---
---CREATE TABLE directions 
-  --PARTITION OF tokens 
-  --FOR VALUES IN ('direction')
-  --PARTITION BY LIST (source) ;
---
---CREATE TABLE street_names 
-  --PARTITION OF tokens 
-  --FOR VALUES IN ('street_name')
-  --PARTITION BY LIST (source) ;
---
---CREATE TABLE suffixes
-  --PARTITION OF tokens 
-  --FOR VALUES IN ('suffix')
-  --PARTITION BY LIST (source) ;
-  --
---CREATE TABLE scraps
-  --PARTITION OF tokens 
-  --FOR VALUES IN ('scrap')
-  --PARTITION BY LIST (source) ;
-  --
 CREATE TABLE levens (
   id SERIAL PRIMARY KEY,
   change_from TEXT NOT NULL,
@@ -60,7 +24,7 @@ CREATE TABLE corrections (
 
 CREATE TABLE addr_tokens (
   id SERIAL PRIMARY KEY,
-  token_str TEXT NOT NULL,
+  token_str TEXT,
   token_type TEXT NOT NULL,
   UNIQUE (token_str, token_type),
   CHECK (token_str not like '')) ;
@@ -122,3 +86,61 @@ CREATE TABLE tickets (
   license_number CHAR(15),
   car_make CHAR(20),
   hearing_dispo CHAR(20)) ;
+
+CREATE TABLE raw_tickets (
+  id SERIAL PRIMARY KEY,
+  ticket_number BIGINT,
+  plate_number TEXT,
+  license_state TEXT,
+  license_type TEXT,
+  car_make TEXT,
+  issue_date TEXT,
+  violation_location TEXT,
+  violation_code TEXT,
+  violation_desc TEXT,
+  badge TEXT,
+  unit TEXT,
+  ticket_queue TEXT,
+  hearing_dispo TEXT) ;
+
+CREATE TABLE chicago_addresses (
+  id serial PRIMARY KEY,
+  longitude FLOAT,
+  latitude FLOAT,
+  unit TEXT,
+  raw_addr TEXT,
+  zip INTEGER,
+  source TEXT) ;
+
+CREATE TABLE smartystreets (
+  original TEXT,
+  delivery_line_1 TEXT,
+  delivery_line_2 TEXT,
+  unit TEXT,
+  street_predirection TEXT,
+  street_name TEXT,
+  street_postdirection TEXT,
+  suffix TEXT,
+  zipcode TEXT,
+  latitude TEXT,
+  longitude TEXT
+) ;
+
+CREATE TABLE street_ranges (
+  id SERIAL PRIMARY KEY,
+  raw_addr TEXT,
+  direction CHAR(1),
+  street TEXT,
+  suffix CHAR(4),
+  suffix_dir CHAR(2),
+  unit_start INTEGER,
+  unit_end INTEGER ) ;
+
+CREATE TABLE parsed_temp (
+    id SERIAL PRIMARY KEY,
+    raw_addr TEXT,
+    unit TEXT,
+    dir TEXT,
+    street_name TEXT,
+    suffix TEXT,
+    scrap TEXT);
