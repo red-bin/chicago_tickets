@@ -1,50 +1,5 @@
 BEGIN ;
 
-  RETURNING id into new_direction_id ;
-
-  INSERT INTO addr_tokens (token_str, token_type)
-  VALUES (NEW.street_name, 'street_name')
-  ON CONFLICT (token_str, token_type) DO UPDATE SET token_str = NEW.street_name
-  RETURNING id into new_street_name_id ;
-
-  INSERT INTO addr_tokens (token_str, token_type)
-  VALUES (NEW.suffix, 'suffix')
-  ON CONFLICT (token_str, token_type) DO UPDATE SET token_str = NEW.suffix
-  RETURNING id into new_suffix_id ;
-
-  INSERT INTO addr_tokens (token_str, token_type)
-  VALUES (NEW.longitude, 'longitude')
-  ON CONFLICT (token_str, token_type) DO UPDATE SET token_str = NEW.longitude
-  RETURNING id into new_raw_addr_id ;
-
-  INSERT INTO addr_tokens (token_str, token_type)
-  VALUES (NEW.latitude, 'latitude')
-  ON CONFLICT (token_str, token_type) DO UPDATE SET token_str = NEW.latitude
-  RETURNING id into new_raw_addr_id ;
-
-  INSERT INTO addr_tokens (token_str, token_type)
-  VALUES (NEW.zipcode, 'zip')
-  ON CONFLICT (token_str, token_type) DO UPDATE SET token_str = NEW.zipcode
-  RETURNING id into new_raw_addr_id ;
-
-  SELECT id FROM data_sources
-  WHERE alias = 'smartystreets' 
-  INTO new_source_id ;
-
-  INSERT INTO raw_addresses (raw_addr_id, raw_unit_id, raw_direction_id, raw_street_name_id, raw_suffix_id, raw_longitude_id, raw_latitude_id, raw_zip_id, correction_id, source_id)
-  (SELECT new_raw_addr_id, new_unit_id,
-          new_direction_id, new_street_name_id, 
-          new_suffix_id, new_longitude_id, 
-          new_latitude_id, new_zip_id, 
-          new_correction_id, new_source_id)
-  ON CONFLICT DO NOTHING ;
-  RETURN NULL ;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER smartystreets_trigger AFTER INSERT ON smartystreets
-  FOR EACH ROW EXECUTE PROCEDURE smartystreets_post_update();
-
 COPY smartystreets (original,delivery_line_1,delivery_line_2,unit,street_predirection,street_name,street_postdirection,suffix,zipcode,latitude,longitude)
   FROM '/home/matt/git/chicago_tickets/data/smartystreet_test.csv'
   WITH (FORMAT CSV, DELIMITER ',', NULL '', HEADER) ;

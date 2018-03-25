@@ -1,9 +1,3 @@
-\set chicago_addresses_path '\'' :datadir 'chicago_addresses.csv\''
-\set tickets_path '\'' :datadir 'all_tickets.orig.txt.semicolongood.testing.txt\''
-\set data_sources_path '\'' :datadir 'data_sources.csv\''
-\set levens_path '\'' :datadir 'corrections/levens.csv\''
-\set street_ranges_path '\'' :datadir 'street_ranges.csv\''
-
 BEGIN ;
 COPY data_sources (alias, url)
   FROM :data_sources_path

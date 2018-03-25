@@ -1,9 +1,3 @@
-\set chicago_addresses_path '\'' :datadir 'chicago_addresses.csv\''
-\set tickets_path '\'' :datadir 'all_tickets.orig.txt.semicolongood.testing.txt\''
-\set data_sources_path '\'' :datadir 'data_sources.csv\''
-\set levens_path '\'' :datadir 'corrections/levens.csv\''
-\set street_ranges_path '\'' :datadir 'street_ranges.csv\''
-
 CREATE OR REPLACE FUNCTION raw_tickets_insert_trigger()
   RETURNS TRIGGER AS $$
 DECLARE
@@ -102,7 +96,6 @@ $$ LANGUAGE plpgsql;
 CREATE TRIGGER parsed_tokens_trigger AFTER INSERT ON parsed_temp
   FOR EACH ROW EXECUTE PROCEDURE insert_parsed_tokens();
 
-
 CREATE OR REPLACE FUNCTION smartystreets_post_update()
   RETURNS TRIGGER AS $$
 DECLARE
@@ -117,18 +110,22 @@ DECLARE
   new_latitude_id int ;
   new_zip_id int ;
   new_correction_id int ;
-  new_source_id int ;
+  smarty_source_id int ;
 
 BEGIN
-  INSERT INTO corrections (change_from, change_to, token_type, source)
-  VALUES (initcap(NEW.original), NEW.delivery_line_1, 'raw_addr', 'smartystreets')
-  ON CONFLICT DO NOTHING
-  RETURNING id INTO new_correction_id ;
+  SELECT id FROM data_sources
+  WHERE alias = 'smartystreets'
+  INTO smarty_source_id ;
 
   INSERT INTO addr_tokens (token_str, token_type)
   VALUES (NEW.original, 'raw_addr')
   ON CONFLICT (token_str, token_type) DO UPDATE SET token_str = NEW.original
   RETURNING id into new_raw_addr_id ;
+
+  INSERT INTO corrections (change_from, change_to, source)
+  VALUES (initcap(NEW.original), new_raw_addr_id, 1)
+  ON CONFLICT DO NOTHING
+  RETURNING id INTO new_correction_id ;
 
   INSERT INTO addr_tokens (token_str, token_type)
   VALUES (NEW.unit, 'unit')
@@ -153,28 +150,24 @@ BEGIN
   INSERT INTO addr_tokens (token_str, token_type)
   VALUES (NEW.longitude, 'longitude')
   ON CONFLICT (token_str, token_type) DO UPDATE SET token_str = NEW.longitude
-  RETURNING id into new_raw_addr_id ;
+  RETURNING id into new_longitude_id ;
 
   INSERT INTO addr_tokens (token_str, token_type)
   VALUES (NEW.latitude, 'latitude')
   ON CONFLICT (token_str, token_type) DO UPDATE SET token_str = NEW.latitude
-  RETURNING id into new_raw_addr_id ;
+  RETURNING id into new_latitude_id ;
 
   INSERT INTO addr_tokens (token_str, token_type)
   VALUES (NEW.zipcode, 'zip')
   ON CONFLICT (token_str, token_type) DO UPDATE SET token_str = NEW.zipcode
-  RETURNING id into new_raw_addr_id ;
-
-  SELECT id FROM data_sources
-  WHERE alias = 'smartystreets'
-  INTO new_source_id ;
+  RETURNING id into new_zip_id ;
 
   INSERT INTO raw_addresses (raw_addr_id, raw_unit_id, raw_direction_id, raw_street_name_id, raw_suffix_id, raw_longitude_id, raw_latitude_id, raw_zip_id, correction_id, source_id)
-  (SELECT new_raw_addr_id, new_unit_id,
+  VALUES (new_raw_addr_id, new_unit_id,
           new_direction_id, new_street_name_id,
           new_suffix_id, new_longitude_id,
           new_latitude_id, new_zip_id,
-          new_correction_id, new_source_id)
+          new_correction_id, smarty_source_id)
   ON CONFLICT DO NOTHING ;
   RETURN NULL ;
 END;

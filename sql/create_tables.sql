@@ -13,21 +13,20 @@ CREATE TABLE levens (
   change_to TEXT NOT NULL,
   nleven FLOAT NOT NULL) ;
 
-CREATE TABLE corrections (
-  id SERIAL PRIMARY KEY, 
-  change_from TEXT, 
-  change_to TEXT, 
-  token_type TEXT,
-  source TEXT,
-  metadata JSONB,
-  UNIQUE (change_from, change_to, token_type, source)) ;
-
 CREATE TABLE addr_tokens (
   id SERIAL PRIMARY KEY,
   token_str TEXT,
   token_type TEXT NOT NULL,
   UNIQUE (token_str, token_type),
   CHECK (token_str not like '')) ;
+
+CREATE TABLE corrections (
+  id SERIAL PRIMARY KEY, 
+ -- change_from INTEGER REFERENCES addr_tokens(id), 
+  change_from TEXT,
+  change_to INTEGER REFERENCES addr_tokens(id),
+  source INTEGER REFERENCES data_sources,
+  UNIQUE (change_from, change_to, source)) ;
 
 CREATE TABLE violations (
   id SERIAL PRIMARY KEY,
