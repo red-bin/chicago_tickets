@@ -17,8 +17,7 @@ CREATE TABLE addr_tokens (
   id SERIAL PRIMARY KEY,
   token_str TEXT,
   token_type TEXT NOT NULL,
-  UNIQUE (token_str, token_type),
-  CHECK (token_str not like '')) ;
+  UNIQUE (token_str, token_type)) ;
 
 CREATE TABLE corrections (
   id SERIAL PRIMARY KEY, 
@@ -57,8 +56,7 @@ CREATE TABLE parsed_tokens (
   dir_id INTEGER REFERENCES addr_tokens(id),
   street_id INTEGER REFERENCES addr_tokens(id),
   suffix_id INTEGER REFERENCES addr_tokens(id),
-  scrap_id INTEGER REFERENCES addr_tokens(id),
-  UNIQUE (raw_addr_id));
+  scrap_id INTEGER REFERENCES addr_tokens(id)) ;
 
 CREATE TABLE addresses (
   id SERIAL PRIMARY KEY,

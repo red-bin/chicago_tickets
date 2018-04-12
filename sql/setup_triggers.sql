@@ -1,17 +1,22 @@
 CREATE OR REPLACE FUNCTION raw_tickets_insert_trigger()
   RETURNS TRIGGER AS $$
 DECLARE
-  raw_addr_token_id int;
-  raw_addresses_id int;
+  raw_addr_token_id INT ;
+  raw_addresses_id INT ;
+  raw_tickets_source_id INT ;
 BEGIN
+  SELECT id FROM data_sources
+  WHERE alias = 'raw_tickets'
+  INTO raw_tickets_source_id ;
+
   raw_addr_token_id := create_addr_token(NEW.violation_location, 'raw_addr') ;
   INSERT INTO raw_addresses (raw_addr_id, source_id)
-  VALUES (raw_addr_token_id, 1) 
-  ON CONFLICT DO NOTHING
+  VALUES (raw_addr_token_id, raw_tickets_source_id)
+  ON CONFLICT (raw_addr_id, source_id) DO UPDATE SET raw_addr_id = raw_addr_token_id
   RETURNING id into raw_addresses_id ;
   
-  INSERT INTO tickets 
-    (ticket_number, raw_addr_id, 
+  INSERT INTO tickets
+    (ticket_number, raw_addr_id,
      time, ticket_queue, unit, badge,
      license_type, license_state, license_number, car_make, hearing_dispo)
   SELECT
@@ -30,11 +35,11 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE FUNCTION create_addr_token(new_token_str text, new_token_type text) RETURNS INT 
+CREATE FUNCTION create_addr_token(new_token_str text, new_token_type text) RETURNS INT
 AS $$
 DECLARE token_id int ;
 BEGIN
-  INSERT INTO addr_tokens (token_str, token_type) 
+  INSERT INTO addr_tokens (token_str, token_type)
   VALUES (new_token_str, new_token_type)
   ON CONFLICT (token_str, token_type) DO UPDATE SET token_str = new_token_str
   RETURNING id into token_id ;
@@ -42,7 +47,7 @@ BEGIN
 END ;
 $$ LANGUAGE plpgsql ;
 
-CREATE TRIGGER ticket_addr_trigger AFTER INSERT ON raw_tickets 
+CREATE TRIGGER ticket_addr_trigger AFTER INSERT ON raw_tickets
   FOR EACH ROW EXECUTE PROCEDURE raw_tickets_insert_trigger();
 
 CREATE OR REPLACE FUNCTION insert_parsed_tokens()
@@ -119,55 +124,46 @@ BEGIN
 
   INSERT INTO addr_tokens (token_str, token_type)
   VALUES (NEW.original, 'raw_addr')
-  ON CONFLICT (token_str, token_type) DO UPDATE SET token_str = NEW.original
+  ON CONFLICT (token_str, token_type) DO NOTHING
   RETURNING id into new_raw_addr_id ;
 
   INSERT INTO corrections (change_from, change_to, source)
-  VALUES (initcap(NEW.original), new_raw_addr_id, 1)
+  VALUES (NEW.original, new_raw_addr_id, smarty_source_id)
   ON CONFLICT DO NOTHING
   RETURNING id INTO new_correction_id ;
 
-  INSERT INTO addr_tokens (token_str, token_type)
-  VALUES (NEW.unit, 'unit')
-  ON CONFLICT (token_str, token_type) DO UPDATE SET token_str = NEW.unit
-  RETURNING id into new_unit_id ;
-
-  INSERT INTO addr_tokens (token_str, token_type)
-  VALUES (NEW.street_predirection, 'direction')
-  ON CONFLICT (token_str, token_type) DO UPDATE SET token_str = NEW.street_predirection
-  RETURNING id into new_direction_id ;
-
-  INSERT INTO addr_tokens (token_str, token_type)
-  VALUES (NEW.street_name, 'street_name')
-  ON CONFLICT (token_str, token_type) DO UPDATE SET token_str = NEW.street_name
-  RETURNING id into new_street_name_id ;
-
-  INSERT INTO addr_tokens (token_str, token_type)
-  VALUES (NEW.suffix, 'suffix')
-  ON CONFLICT (token_str, token_type) DO UPDATE SET token_str = NEW.suffix
-  RETURNING id into new_suffix_id ;
-
-  INSERT INTO addr_tokens (token_str, token_type)
-  VALUES (NEW.longitude, 'longitude')
-  ON CONFLICT (token_str, token_type) DO UPDATE SET token_str = NEW.longitude
-  RETURNING id into new_longitude_id ;
-
-  INSERT INTO addr_tokens (token_str, token_type)
-  VALUES (NEW.latitude, 'latitude')
-  ON CONFLICT (token_str, token_type) DO UPDATE SET token_str = NEW.latitude
-  RETURNING id into new_latitude_id ;
-
-  INSERT INTO addr_tokens (token_str, token_type)
-  VALUES (NEW.zipcode, 'zip')
-  ON CONFLICT (token_str, token_type) DO UPDATE SET token_str = NEW.zipcode
-  RETURNING id into new_zip_id ;
-
-  INSERT INTO raw_addresses (raw_addr_id, raw_unit_id, raw_direction_id, raw_street_name_id, raw_suffix_id, raw_longitude_id, raw_latitude_id, raw_zip_id, correction_id, source_id)
-  VALUES (new_raw_addr_id, new_unit_id,
-          new_direction_id, new_street_name_id,
-          new_suffix_id, new_longitude_id,
-          new_latitude_id, new_zip_id,
-          new_correction_id, smarty_source_id)
+  WITH atok_updates as (
+    INSERT INTO addr_tokens (token_str, token_type)
+    VALUES (NEW.unit, 'unit'),
+           (NEW.street_predirection, 'direction'),
+           (NEW.street_name, 'street_name'),
+           (NEW.suffix, 'suffix'),
+           (NEW.longitude, 'longitude'),
+           (NEW.latitude, 'latitude'),
+           (NEW.zipcode, 'zip')
+    ON CONFLICT DO NOTHING
+    RETURNING id, token_str, token_type )
+  INSERT INTO raw_addresses 
+  (raw_addr_id, raw_unit_id, raw_direction_id, raw_street_name_id, raw_suffix_id, raw_longitude_id, raw_latitude_id, raw_zip_id, correction_id, source_id)
+  VALUES (
+       coalesce((SELECT id from atok_updates where token_type = 'raw_addr')
+                , (SELECT at.id from addr_tokens at where token_type = 'raw_addr' and at.token_str = token_str )), 
+       coalesce((SELECT id from atok_updates where token_type = 'unit')
+                , (SELECT id from addr_tokens where token_str = 'unit' and at.token_str = token_str)), 
+       coalesce((SELECT id from atok_updates where token_type = 'direction')
+                , (SELECT id from addr_tokens where token_str = 'direction' and at.token_str = token_str)), 
+       coalesce((SELECT id from atok_updates where token_type = 'street_name')
+                , (SELECT id from addr_tokens where token_str = 'street_name' and at.token_str = token_str)), 
+       coalesce((SELECT id from atok_updates where token_type = 'suffix')
+                , (SELECT id from addr_tokens where token_str = 'suffix' and at.token_str = token_str)), 
+       coalesce((SELECT id from atok_updates where token_type = 'longitude')
+                , (SELECT id from addr_tokens where token_str = 'longitude' and at.token_str = token_str)), 
+       coalesce((SELECT id from atok_updates where token_type = 'latitude')
+                , (SELECT id from addr_tokens where token_str = 'latitude' and at.token_str = token_str)), 
+       coalesce((SELECT id from atok_updates where token_type = 'zip')
+                , (SELECT id from addr_tokens where token_str = 'zip' and at.token_str = token_str)), 
+          new_correction_id, 
+          smarty_source_id)
   ON CONFLICT DO NOTHING ;
   RETURN NULL ;
 END;

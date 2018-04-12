@@ -1,12 +1,11 @@
 BEGIN ;
 
 COPY smartystreets (original,delivery_line_1,delivery_line_2,unit,street_predirection,street_name,street_postdirection,suffix,zipcode,latitude,longitude)
-  FROM '/home/matt/git/chicago_tickets/data/smartystreet_test.csv'
+  FROM :smarty_streets_path
   WITH (FORMAT CSV, DELIMITER ',', NULL '', HEADER) ;
 
-CREATE INDEX corrections_idx ON corrections(change_from);
-
 COMMIT ;
+
 --UPDATE raw_addresses
 --SET correction_id = c.id
 --FROM corrections c
