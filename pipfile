@@ -1,0 +1,10 @@
+#MAKE THIS
+
+
+bokeh
+pandas
+pandasql
+setuptools
+usaddress
+psycopg2-binary
+distance
