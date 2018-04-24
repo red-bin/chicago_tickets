@@ -3,9 +3,13 @@
 import csv
 import psycopg2
 
+import geopandas as gpd
+
+from shapely import geometry
+
 import usaddress
 
-datadir="/home/matt/git/chicago_tickets/data"
+datadir='/opt/data/prod_data'
 
 chi_addrs_path = '%s/chicago_addresses.csv' % datadir
 tickets_path = '%s/all_tickets.orig.txt.semicolongood.txt' % datadir
@@ -146,6 +150,10 @@ class Ticket():
         self.latitude = None
         self.longitude = None
 
+        self.geopoint = None
+        self.neighborhood = None
+        self.ward = None
+
         self.location = None
         self.corrected_by = None
 
@@ -171,12 +179,36 @@ class Ticket():
                 self.street_predirection,  self.street_name, 
                 self.street_suffix, self.latitude, self.longitude)
 
+def neighborhood_shapedata():
+    shapefile_dir = '/opt/data/shapefiles/'
+    filename = 'geo_export_11129122-2d69-48a4-9b49-ae802351855f.shp'
+    filepath = '%s/neighborhoods/%s' % (shapefile_dir, filename)
+
+    shape_data = gpd.read_file(filepath)
+
+    return shape_data
+
+def neighborhood_from_point(geopoint):
+    count = 0
+    for hood in shapedata['geometry']:
+        if geopoint.within(hood):
+            hood_name = shapedata['community'][count]
+            return hood_name.title()
+
+        count+=1
+
+    return
+
 def clean_tickets():
     print("Throwing smartystreets data into memory for fast lookup")
     smarty_corrected = smarty_corrected_map()
 
     count = 0
     print("Starting cleanup process")
+
+    good_hoods = 0
+    bad_hoods = 0
+
     for t in raw_tickets():
         ticket = Ticket(*t)
 
@@ -191,17 +223,27 @@ def clean_tickets():
             ticket.street_suffix = addr_info['suffix']
             ticket.zipcode = addr_info['zipcode']
 
-            ticket.latitude = addr_info['latitude']
-            ticket.longitude = addr_info['longitude']
+            ticket.latitude = float(addr_info['latitude'])
+            ticket.longitude = float(addr_info['longitude'])
 
             ticket.ready = True
 
+        if ticket.latitude and ticket.longitude:
+            ticket.geopoint = geometry.Point(ticket.longitude, ticket.latitude)
+            ticket.neighborhood = neighborhood_from_point(ticket.geopoint)
+
+            if ticket.neighborhood:
+                good_hoods+=1
+
+            else:
+                bad_hoods+=1
+           
         if ticket.ready:
             yield ticket
             count+=1
 
             if count % 10000 == 0:
-                print(count)
+                print("Hood good: %s, hood bad: %s" % (good_hoods, bad_hoods))
                 conn.commit()
 
 def insert_tickets(tickets):
@@ -216,4 +258,6 @@ def insert_tickets(tickets):
 #insert_raw_tickets()
 
 print("Inserting clean tickets data")
+shapedata = neighborhood_shapedata()
+
 insert_tickets(clean_tickets())
