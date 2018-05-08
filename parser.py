@@ -152,7 +152,8 @@ class Ticket():
 
         self.geopoint = None
         self.neighborhood = None
-        self.ward = None
+        self.ward2003 = None
+        self.ward2015 = None
 
         self.location = None
         self.corrected_by = None
@@ -177,7 +178,8 @@ class Ticket():
         return (self.issue_date, self.violation_code, self.badge, 
                 self.hearing_dispo, self.street_unit_no, 
                 self.street_predirection,  self.street_name, 
-                self.street_suffix, self.latitude, self.longitude)
+                self.street_suffix, self.latitude, self.longitude,
+                self.ward2003, self.ward2015, self.neighborhood)
 
 def neighborhood_shapedata():
     shapefile_dir = '/opt/data/shapefiles/'
@@ -188,7 +190,25 @@ def neighborhood_shapedata():
 
     return shape_data
 
-def neighborhood_from_point(geopoint):
+def wards2015_shapedata():
+    shapefile_dir = '/opt/data/shapefiles/'
+    filename = 'geo_export_21178b31-9758-4895-adcc-24ce80929959.shp'
+    filepath = '%s/wards2015/%s' % (shapefile_dir, filename)
+
+    shape_data = gpd.read_file(filepath)
+
+    return shape_data
+
+def wards2003_shapedata():
+    shapefile_dir = '/opt/data/shapefiles/'
+    filename = 'geo_export_40f24d1b-c326-4d93-ad6f-33c8a1b35fe6.shp'
+    filepath = '%s/wards2003/%s' % (shapefile_dir, filename)
+
+    shape_data = gpd.read_file(filepath)
+
+    return shape_data
+
+def neighborhood_from_point(geopoint, shapedata):
     count = 0
     for hood in shapedata['geometry']:
         if geopoint.within(hood):
@@ -197,11 +217,38 @@ def neighborhood_from_point(geopoint):
 
         count+=1
 
-    return
+    return None
+
+def ward2003_from_point(geopoint, shapedata):
+    count = 0
+    for ward in shapedata['geometry']:
+        if geopoint.within(ward):
+            ward_no = shapedata.ward[count]
+            return ward_no
+
+        count+=1
+
+    return None
+
+def ward2015_from_point(geopoint, shapedata):
+    count = 0
+    for ward in shapedata['geometry']:
+        if geopoint.within(ward):
+            ward_no = shapedata.ward[count]
+            return ward_no
+
+        count+=1
+
+    return None
+
 
 def clean_tickets():
     print("Throwing smartystreets data into memory for fast lookup")
     smarty_corrected = smarty_corrected_map()
+
+    wards2015_geom = wards2015_shapedata()
+    wards2003_geom = wards2003_shapedata()
+    hoods_geom = neighborhood_shapedata()
 
     count = 0
     print("Starting cleanup process")
@@ -230,7 +277,9 @@ def clean_tickets():
 
         if ticket.latitude and ticket.longitude:
             ticket.geopoint = geometry.Point(ticket.longitude, ticket.latitude)
-            ticket.neighborhood = neighborhood_from_point(ticket.geopoint)
+            ticket.neighborhood = neighborhood_from_point(ticket.geopoint, hoods_geom)
+            ticket.ward2003 = str(ward2003_from_point(ticket.geopoint, wards2003_geom))
+            ticket.ward2015 = str(ward2015_from_point(ticket.geopoint, wards2015_geom))
 
             if ticket.neighborhood:
                 good_hoods+=1
@@ -249,15 +298,14 @@ def clean_tickets():
 def insert_tickets(tickets):
     curs = conn.cursor()
     sqlstr = """INSERT INTO tickets VALUES 
-             (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
+             (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
 
     for t in tickets:
         curs.execute(sqlstr, t.pg_info())
 
-#print("Inserting raw tickets' data")
-#insert_raw_tickets()
+print("Inserting raw tickets' data")
+insert_raw_tickets()
 
 print("Inserting clean tickets data")
-shapedata = neighborhood_shapedata()
 
 insert_tickets(clean_tickets())

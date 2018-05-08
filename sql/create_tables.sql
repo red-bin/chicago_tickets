@@ -29,4 +29,7 @@ CREATE TABLE tickets (
   street_name TEXT,
   street_suffix TEXT,
   latitude FLOAT,
-  longitude FLOAT) ;
+  longitude FLOAT,
+  ward2003_no TEXT,
+  ward2015_no TEXT,
+  neighborhood TEXT) ;

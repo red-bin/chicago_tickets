@@ -2,7 +2,7 @@
 
 set -e
 
-SQLDIR='/home/matt/git/tickets_parser/sql'
+SQLDIR='/home/matt/git/chicago_tickets/sql'
 
 function sql_from_file {
     echo "running $SQLDIR/$1" 
@@ -18,5 +18,5 @@ function setup_db {
     sql_from_file create_tables.sql
 }
 
-#setup_db
+setup_db
 ./parser.py
