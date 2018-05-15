@@ -8,3 +8,5 @@ setuptools
 usaddress
 psycopg2-binary
 distance
+PyShp
+colour

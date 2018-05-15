@@ -18,6 +18,7 @@ class TicketsApp():
         self.max_lat = 42.05
 
         self.boundary_lines = None
+        self.boundary_fig = None
 
         colors = ["#75968f", "#a5bab7", "#c9d9d3", "#e2e2e2", "#dfccce",
                   "#ddb7b1", "#cc7878", "#933b41", "#550b1d"]
@@ -30,15 +31,15 @@ class TicketsApp():
             self.tickets = mapper_utils.get_tickets(60000000)
 
         self.mapfigure = self.map_figure()
+        self.boundary_fig = self.shapefile_figure("Neighborhoods")
         self.mapped_controls = [self.shapefile_selecter()]
-
-        self.layout = self.create_layout()
 
     def create_layout(self):
         inputs = widgetbox(*self.mapped_controls, sizing_mode='fixed')
         desc = column()
 
-        bokeh_objs = [inputs, self.mapfigure]
+
+        bokeh_objs = [inputs, self.boundary_fig, self.mapfigure]
 
         ret = layout([[desc], bokeh_objs], sizing_mode='fixed')
 
@@ -58,20 +59,26 @@ class TicketsApp():
         return mapped_figure
 
     def shapefile_selecter(self):
-        selecter = Select(title="Boundaries", value="", options=shapefile_aliases)
-        selecter.on_change('value', lambda attr, old, new: self.plot_shapefile(new))
+        selecter.on_change('value', lambda attr, old, new: self.update(new))
 
         return selecter
 
     def plot_tickets(self):
-        source = mapper_utils.get_tickets()
         fill_color = {'field': 'count', 'transform': self.color_mapper}
 
-        ticket_circles = self.mapfigure.circle(x='longitude', y='latitude', source=source, 
-                                               size=2.5, fill_color=fill_color, 
-                                               fill_alpha=.5, line_color='blue')
-
         return ticket_circles
+
+    def plot_shapefile(self):
+        ret = {}
+        self.boundary_lines = mapper_utils.get_boundaries(shapefile_alias)
+        opts = dict(xs='xs',
+                    ys='ys',
+                    source = self.boundary_lines,
+                    line_color='red', visible=True)
+
+        boundary_fig = self.mapfigure.multi_line(**opts)
+
+        return boundary_fig
 
     def heatmap_figure(self):
         fig = figure(plot_height=300, plot_width=750, title="Heatmap!",)
@@ -89,25 +96,28 @@ class TicketsApp():
 
         return rect
 
-    def plot_shapefile(self, shapefile_alias):
-        ret = {}
-        self.boundary_lines = mapper_utils.get_boundaries(shapefile_alias)
-        opts = dict(xs='xs',
-                    ys='ys',
-                    source = self.boundary_lines,
-                    line_color='red', visible=True)
+    def update(self):
+        shapefile_val = self.controls['shapefile'].value
 
-        self.boundary_fig = self.mapfigure.multi_line(**opts)
-        return self.boundary_fig
-
+tickets_source = mapper_utils.get_tickets()
 
 app = TicketsApp()
 tickets_doc = curdoc()
 
-tickets_doc.add_root(app.layout)
-tickets_doc.title = "Parking Tickets!"
 app.plot_tickets()
-app.plot_shapefile('Neighborhoods')
+
+selecter = Select(title="Boundaries", value="Neighborhoods", options=shapefile_aliases)
+controls = [selecter]
+
+for control in controls:
+    control.on_change('value', lambda attr, old, new: app.update())
+
+self.mapfigure.circle(x='longitude', y='latitude', source=tickets_source, 
+                      size=2.5, fill_color=fill_color, 
+                      fill_alpha=.5, line_color='blue')
+layout = app.create_layout()
+tickets_doc.add_root(layout)
+tickets_doc.title = "Parking Tickets!"
 #app.plot_heatmap()
 #app.plot_shapefile("Neighborhoods")
 #show(column(app.mapfigure, *app.mapped_controls))

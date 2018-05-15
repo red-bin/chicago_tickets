@@ -32,4 +32,5 @@ CREATE TABLE tickets (
   longitude FLOAT,
   ward2003_no TEXT,
   ward2015_no TEXT,
-  neighborhood TEXT) ;
+  neighborhood TEXT,
+  census_block INTEGER) ;

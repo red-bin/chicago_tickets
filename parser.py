@@ -82,19 +82,13 @@ def tag_addr(addr):
     return tagged_address
 
 def raw_tickets():
-    sqlstr = "SELECT * from raw_tickets"
+    sqlstr = "SELECT * from raw_tickets ORDER BY VIOLATION_LOCATION DESC"
     c = conn.cursor()
     c.execute(sqlstr)
     c.fetchone()
-
     
-    row = c.fetchone()
-    while row:
-        yield row
-        row = c.fetchone()
-
+    return c.fetchall()
     c.close()
-
 
 def smarty_corrections():
     fh = open(smarty_streets_path)
@@ -154,6 +148,7 @@ class Ticket():
         self.neighborhood = None
         self.ward2003 = None
         self.ward2015 = None
+        self.census_block = None
 
         self.location = None
         self.corrected_by = None
@@ -179,12 +174,22 @@ class Ticket():
                 self.hearing_dispo, self.street_unit_no, 
                 self.street_predirection,  self.street_name, 
                 self.street_suffix, self.latitude, self.longitude,
-                self.ward2003, self.ward2015, self.neighborhood)
+                self.ward2003, self.ward2015, self.neighborhood, self.census_block)
 
 def neighborhood_shapedata():
     shapefile_dir = '/opt/data/shapefiles/'
     filename = 'geo_export_11129122-2d69-48a4-9b49-ae802351855f.shp'
     filepath = '%s/neighborhoods/%s' % (shapefile_dir, filename)
+
+    shape_data = gpd.read_file(filepath)
+
+    return shape_data
+
+def blocks_shapedata():
+    shapefile_path = '/opt/data/shapefiles/census_blocks_2010/%s'
+    filename = 'geo_export_f57248f4-5971-49da-ba10-fb5e9059d6e8.shp'
+
+    filepath = shapefile_path % filename
 
     shape_data = gpd.read_file(filepath)
 
@@ -207,6 +212,23 @@ def wards2003_shapedata():
     shape_data = gpd.read_file(filepath)
 
     return shape_data
+
+blocks_probs = {}
+def block_from_point(geopoint):
+    count = 0
+    for hood in blocks_geom['geometry']:
+        if geopoint.within(hood):
+            block_no = blocks_geom['blockce10'][count]
+
+            if block_no not in blocks_probs.keys():
+                blocks_probs[block_no] = 0
+
+            block_probs[block_no] += 1
+            return block_no
+
+        count+=1
+
+    return None
 
 def neighborhood_from_point(geopoint, shapedata):
     count = 0
@@ -257,6 +279,7 @@ def clean_tickets():
     bad_hoods = 0
 
     for t in raw_tickets():
+        print(count)
         ticket = Ticket(*t)
 
         if ticket.raw_location in smarty_corrected:
@@ -280,6 +303,10 @@ def clean_tickets():
             ticket.neighborhood = neighborhood_from_point(ticket.geopoint, hoods_geom)
             ticket.ward2003 = str(ward2003_from_point(ticket.geopoint, wards2003_geom))
             ticket.ward2015 = str(ward2015_from_point(ticket.geopoint, wards2015_geom))
+            ticket.census_block = block_from_point(ticket.geopoint)
+
+            if ticket.census_block:
+                ticket.census_block = int(ticket.census_block)
 
             if ticket.neighborhood:
                 good_hoods+=1
@@ -288,22 +315,25 @@ def clean_tickets():
                 bad_hoods+=1
            
         if ticket.ready:
-            yield ticket
+            yield(ticket)
             count+=1
 
-            if count % 10000 == 0:
+            if count % 100 == 0:
                 print("Hood good: %s, hood bad: %s" % (good_hoods, bad_hoods))
                 conn.commit()
+
+    return all_tickets
 
 def insert_tickets(tickets):
     curs = conn.cursor()
     sqlstr = """INSERT INTO tickets VALUES 
-             (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
+             (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"""
 
     for t in tickets:
         curs.execute(sqlstr, t.pg_info())
 
 print("Inserting raw tickets' data")
+blocks_geom = blocks_shapedata()
 insert_raw_tickets()
 
 print("Inserting clean tickets data")

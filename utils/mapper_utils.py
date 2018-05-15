@@ -2,6 +2,7 @@
 
 import psycopg2
 import pandas.io.sql as pandasql
+import pandas as pd
 import geopandas as gpd
 
 from bokeh.models import ColumnDataSource
@@ -14,11 +15,7 @@ def pg_query(sqlstr):
     return ret
 
 def get_tickets(count=1000):
-    sqlstr = """SELECT 1 as count,
-                  violation_code,
-                  latitude,
-                  longitude
-                FROM tickets
+    sqlstr = """SELECT * FROM tickets
                 LIMIT %s
              """ % count
 
@@ -56,20 +53,15 @@ def get_boundaries(selected_shapefile=None):
 def shapefile_to_columndata(filepath):
     lines = gpd.read_file(filepath)
 
-    boundary_lines = []
-    xs = []
-    ys = []
+    shapes = []
     for lines_geometry in lines['geometry']:
-        geom_xys = []
-        shapefile_gpd = gpd.GeoDataFrame()
+        xs = []
+        ys = []
 
         try:
-            xs += lines_geometry.boundary.xy[0]
-            ys += lines_geometry.boundary.xy[1]
+            new_df = pd.DataFrame(x=lines_geometry.boundary.xy[0],
+                                  y=lines_geometry.boundary.xy[1])
         except:
             pass
 
-    print("x: ", len(xs), "y:", len(ys))
-    column_data = ColumnDataSource(dict(xs=xs, ys=ys))
-
-    return dict(xs=xs, ys=ys)
+    return pd.DataFrame(dict(xs=xs, ys=ys))
