@@ -19,4 +19,7 @@ function setup_db {
 }
 
 setup_db
-./parser.py
+./download_geodata.sh
+./insert_tickets.py
+./geocateg_smartydata.py
+#./parser.py

@@ -31,7 +31,7 @@ class TicketsApp():
             self.tickets = mapper_utils.get_tickets(60000000)
 
         self.mapfigure = self.map_figure()
-        self.boundary_fig = self.shapefile_figure("Neighborhoods")
+        #self.boundary_fig = self.shapefile_figure("Neighborhoods")
         self.mapped_controls = [self.shapefile_selecter()]
 
     def create_layout(self):
@@ -58,10 +58,10 @@ class TicketsApp():
 
         return mapped_figure
 
-    def shapefile_selecter(self):
-        selecter.on_change('value', lambda attr, old, new: self.update(new))
-
-        return selecter
+    #def shapefile_selecter(self):
+    #    selecter.on_change('value', lambda attr, old, new: self.update(new))
+#
+#        return selecter
 
     def plot_tickets(self):
         fill_color = {'field': 'count', 'transform': self.color_mapper}

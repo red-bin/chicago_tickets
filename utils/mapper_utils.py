@@ -3,65 +3,76 @@
 import psycopg2
 import pandas.io.sql as pandasql
 import pandas as pd
+import json
+import folium
 import geopandas as gpd
 
 from bokeh.models import ColumnDataSource
+rootpath = '/opt/data/shapefiles'
 
-def pg_query(sqlstr):
+def pg_query(sqlstr, index_col=None):
     connstr = "dbname=tickets host=localhost user=tickets password=tickets"
     conn = psycopg2.connect(connstr)
-    ret = pandasql.read_sql(sqlstr, conn)
+
+    if index_col: 
+        ret = pandasql.read_sql(sqlstr, conn, index_col=index_col)
+    else:
+        ret = pandasql.read_sql(sqlstr, conn)
+
     conn.close()
     return ret
 
 def get_tickets(count=1000):
-    sqlstr = """SELECT * FROM tickets
-                LIMIT %s
-             """ % count
+    sqlstr = """SELECT * FROM addresses as a 
+                INNER JOIN tickets 
+                ON tickets.violation_location = a.original LIMIT %s;""" % count
 
     return pg_query(sqlstr)
 
-def get_heatmap_tickets():
-    sqlstr = """SELECT COUNT(EXTRACT(DOY FROM issue_date)) as count,
-                       EXTRACT(DOY FROM issue_date) as doy,
-                       EXTRACT(YEAR FROM issue_date) as year
-                FROM tickets
-                GROUP BY year, doy"""
-    heatmap_data = pg_query(sqlstr)
-    return heatmap_data
+def mapbox_data():
+    sqlstr = """SELECT a.latitude, a.longitude,
+                        t.issue_date,
+                        t.violation_code,
+                        t.hearing_dispo 
+                FROM addresses as a, 
+                     tickets as t
+                WHERE a.original = t.violation_location"""
 
-def get_boundaries(selected_shapefile=None):
-    filepath = None
-    boundaries = []
-    if selected_shapefile == "Wards (2003-2015)":
-        filedir = '/opt/data/shapefiles/wards2003'
-        filepath = '%s/geo_export_40f24d1b-c326-4d93-ad6f-33c8a1b35fe6.shp' % filedir
+    return pg_query(sqlstr)
 
-    elif selected_shapefile == "Wards (2015-Present)":
-        filedir = '/opt/data/shapefiles/wards2015'
-        filepath = '%s/geo_export_21178b31-9758-4895-adcc-24ce80929959.shp' % filedir
 
-    elif selected_shapefile == "Neighborhoods":
-        filedir = '/opt/data/shapefiles/neighborhoods/'
-        filepath = '%s/geo_export_11129122-2d69-48a4-9b49-ae802351855f.shp' % filedir
+def counts_by_alias(alias):
+    alias_cols = {
+       'neighborhoods':'neighborhood',
+       "wards2003": 'ward_2003',
+       "wards2015": 'ward_2015',
+       "census_tracts": 'tractce10',
+       "census_blocks": 'tract_bloc' }
 
-    if filepath:
-        boundaries = shapefile_to_columndata(filepath)
+    key = alias_cols[alias]
+    
+    sqlstr = """SELECT * from (select count(a.%s) as sum, a.%s
+                from tickets t, addresses as a 
+                WHERE t.violation_location = a.original
+                AND a.%s is not null
+                GROUP BY a.%s) as foo
+                WHERE sum < 50000""" % (key, key, key, key)
 
-    return boundaries
+    return pg_query(sqlstr), key
 
-def shapefile_to_columndata(filepath):
-    lines = gpd.read_file(filepath)
+def sample_counts_neighborhood():
+    return pg_query(sqlstr)
 
-    shapes = []
-    for lines_geometry in lines['geometry']:
-        xs = []
-        ys = []
+def sum_ts_by_key(key, duration):
+    inputs = (duration, key, duration, key)
 
-        try:
-            new_df = pd.DataFrame(x=lines_geometry.boundary.xy[0],
-                                  y=lines_geometry.boundary.xy[1])
-        except:
-            pass
+    sqlstr="""
+    SELECT sum(cost), time_bucket('%s', issue_date), %s
+      FROM violations as v, addresses AS a
+      INNER JOIN tickets AS t
+      ON t.violation_location = a.original
+      WHERE v.code = t.violation_code
+      GROUP BY time_bucket('%s', issue_date), %s
+      ORDER BY sum""" % inputs
 
-    return pd.DataFrame(dict(xs=xs, ys=ys))
+    return pg_query(sqlstr)

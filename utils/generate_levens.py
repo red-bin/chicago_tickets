@@ -16,7 +16,7 @@ def valid_streets(db):
     streets = []
     cursor = db.cursor()
 
-    cursor.execute("SELECT DISTINCT(street) FROM street_ranges ORDER BY street")
+    cursor.execute("SELECT distinct(original) FROM addresses ORDER BY original")
     [ streets.append(l[0].strip()) for l in cursor.fetchall() if l ]
 
     return streets

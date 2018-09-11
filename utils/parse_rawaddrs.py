@@ -4,96 +4,75 @@ import csv
 import usaddress
 import psycopg2
 
-def postgres_conn():
+
+def pg_conn():
     connstr = "dbname=tickets host=localhost user=tickets password=tickets"
     conn = psycopg2.connect(connstr)
 
     return conn
 
-def pull_addresses(cursor):
-    sql = """SELECT DISTINCT(token_str) FROM addr_tokens 
-           WHERE token_type = 'raw_addr' 
-           ORDER BY token_str"""
-    cursor.execute(sql)
-    ret = (i[0] for i in cursor.fetchall() )
+datadir='/opt/data/prod_data'
+tickets_path = '%s/all_tickets.orig.txt.semicolongood.txt' % datadir
+conn = pg_conn()
 
-    return ret
+def ticket_addresses():
+    sqlstr = "SELECT DISTINCT(violation_location) from raw_tickets"
+    c = conn.cursor()
+    c.execute(sqlstr)
+    c.fetchone()
 
-def tag_addr(raw_addr):
+    addresses = [ a[0].title() for a in c.fetchall() ]
+    return addresses
+
+def insert_raw_tickets():
+    sqlstr = """
+      COPY raw_tickets FROM '%s'
+        WITH (FORMAT CSV, DELIMITER ';', NULL '', QUOTE '|', HEADER) ; 
+      """ % tickets_path
+
+    cursor = conn.cursor()
+    cursor.execute(sqlstr)
+    conn.commit()
+    cursor.close()
+
+def tag_addr(addr):
     tag_mapping = {
         'AddressNumber': 'unit',
         'StreetNamePreDirectional': 'direction',
         'StreetName': 'street_name',
         'StreetNamePostType': 'suffix',
-        'AddressNumberPrefix': 'scrap_pile',
-        'AddressNumberSuffix': 'scrap_pile',
-        'Recipient': 'scrap_pile',
-        'StreetNamePreModifier': 'scrap_pile',
-        'StreetNamePreType': 'scrap_pile',
-        'StreetNamePostDirectional': 'scrap_pile',
+        'AddressNumberPrefix': 'unit_prefix',
+        'AddressNumberSuffix': 'unit_suffix',
+        'Recipient': 'recipient',
+        'StreetNamePreModifier': 'pre_mod',
+        'StreetNamePreType': 'pre_type',
+        'StreetNamePostDirectional': 'post_dir',
         'StreetNamePostModifier': 'scrap_pile',
-        'CornerOf': 'scrap_pile',
-        'USPSBoxGroupID': 'scrap_pile',
-        'USPSBoxGroupType': 'scrap_pile',
-        'USPSBoxID': 'scrap_pile',
-        'PlaceName': 'scrap_pile',
-        'StateName': 'scrap_pile',
-        'ZipCode': 'scrap_pile',
-        'USPSBoxType': 'scrap_pile',
-        'BuildingName': 'scrap_pile',
-        'OccupancyType': 'scrap_pile',
-        'OccupancyIdentifier': 'scrap_pile',
-        'SubaddressIdentifier': 'scrap_pile',
-        'SubaddressType': 'scrap_pile',
-        'LandmarkName': 'scrap_pile',
-        'IntersectionSeparator': 'scrap_pile',
+        'CornerOf': 'corner_of',
+        'USPSBoxGroupID': 'usps_group_id',
+        'USPSBoxGroupType': 'usps_group_type',
+        'USPSBoxID': 'usps_id',
+        'PlaceName': 'place_name',
+        'StateName': 'state_name',
+        'ZipCode': 'zip',
+        'USPSBoxType': 'usps_type',
+        'BuildingName': 'building_name',
+        'OccupancyType': 'occupancy_type',
+        'OccupancyIdentifier': 'occupancy_id',
+        'SubaddressIdentifier': 'subaddr_id',
+        'SubaddressType': 'subaddr_type',
+        'LandmarkName': 'landmark_name',
+        'IntersectionSeparator': 'intersection_sep',
      }
 
-    try:
-        tagged_address, address_type = usaddress.tag(raw_addr, tag_mapping=tag_mapping)
-
-    except: #usaddress.RepeatedLabelError as e :
-        print(raw_addr)
-        tagged_address = None
+    tagged_address, address_type = usaddress.tag(addr, tag_mapping=tag_mapping)
 
     return tagged_address
 
-def parse_address(raw_addr):
-    tagged = tag_addr(raw_addr)
-    if not tagged:
-        return None, None, None, None
-    keys = tagged.keys()
+def raw_tickets():
+    sqlstr = "SELECT * from raw_tickets"
+    c = conn.cursor()
+    c.execute(sqlstr)
+    c.fetchone()
 
-    unit, direction, street_name, suffix = None, None, None, None
-    scrap_pile = None
-
-    if 'unit' in keys:
-        unit = tagged['unit']
-        #todo: move this to psql
-        if not unit.isnumeric():
-            unit = None
-
-    if 'direction' in keys:
-        direction = tagged['direction']
-    if 'street_name' in keys:
-        street_name = tagged['street_name']
-    if 'suffix' in keys:
-        suffix = tagged['suffix']
-    if 'scrap_pile' in keys:
-        scrap_pile = tagged['scrap_pile']
-
-    return raw_addr, unit, direction, street_name, suffix, scrap_pile
-
-conn = postgres_conn()
-cursor = conn.cursor()
-
-parsed = ( parse_address(raw_addr) for raw_addr in pull_addresses(cursor) )
-valid_parsed = ( parsed_addr for parsed_addr in parsed if list(set(parsed_addr))[0])
-
-fh = open('/home/matt/git/chicago_tickets/data/parsed_addresses.csv','w')
-
-header = ('raw_addr', 'unit', 'dir', 'street_name', 'suffix', 'scrap')
-
-writer = csv.writer(fh)
-writer.writerow(header)
-writer.writerows(valid_parsed)
+    return c.fetchall()

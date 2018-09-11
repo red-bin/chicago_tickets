@@ -9,6 +9,7 @@ from requests import get
 geocache_dir = '/opt/data/tickets/cache/geodata'
 
 def download_data(page_id, place_name=None, file_format="GeoJSON"):
+    print("Downloading map %s.." % page_id)
     url = "https://data.cityofchicago.org/api/geospatial/%s?method=export&format=%s"
     url = url % (page_id, file_format)
 
@@ -31,27 +32,29 @@ def download_data(page_id, place_name=None, file_format="GeoJSON"):
         return None
 
 def geojson_by_boundary_alias(place_name, save=False, file_format="GeoJSON"):
+    key = None
+    if place_name == "neighborhoods":
+        path_id = "bbvz-uum9"
+        key = 'sec_neigh'
+    elif place_name == "wards2003":
+        path_id = "xt4z-bnwh"
+        key = 'ward'
+    elif place_name == "wards2015":
+        path_id = "sp34-6z76"
+        key = 'ward'
+    elif place_name == "census_tracts":
+        path_id = "5jrd-6zik"
+        key = 'tractce10'
+    elif place_name == "census_blocks":
+        path_id = "mfzt-js4n"
+        key = 'tract_bloc'
+
     geojson_fp = "%s/%s.geojson" % (geocache_dir, place_name)
-    print("checking: %s" % geojson_fp)
-    if not exists(geojson_fp):
-        print("does not exist")
-        if place_name == "neighborhoods":
-            geo_data = download_data("bbvz-uum9", place_name=place_name)
-        elif place_name == "wards2003":
-            geo_data = download_data("xt4z-bnwh", place_name=place_name)
-        elif place_name == "wards2015":
-            geo_data = download_data("sp34-6z76", place_name=place_name)
-        elif place_name == "census_blocks":
-            geo_data = download_data("5jrd-6zik", place_name=place_name)
-        else:
-            return None
+    if not exists(geojson_fp) and key:
+        download_data(path_id, place_name=place_name)
+        geo_data = geojson_by_boundary_alias(place_name)
 
     else:
-        print("file already exists")
         geo_data = json.load(open(geojson_fp,'r'))
 
-    if geo_data:
-        return geo_data
-
-    print('geodata doesn\'t exist.')
-    return
+    return geo_data, key
